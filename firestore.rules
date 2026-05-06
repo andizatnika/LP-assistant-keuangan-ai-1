@@ -20,19 +20,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() && isOwner(userId);
-      
-      allow create: if isSignedIn() 
-        && isOwner(userId)
-        && isValidUser(incoming());
-
-      // Allow users to update their profile to verify it
-      allow update: if (
-        isSignedIn() && isOwner(userId) && (
-          // Action: Verify Account
-          (incoming().diff(existing()).affectedKeys().hasOnly(['isVerified', 'expiresAt']))
-        )
-      );
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
   }
 }

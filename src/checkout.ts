@@ -7,6 +7,53 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 // State & DOM
 let orderData: any = {};
 let uniquePrice = 99000 + Math.floor(Math.random() * 999) + 1; // 99.001 to 99.999
@@ -159,14 +206,18 @@ btnNext.addEventListener('click', async () => {
     };
 
     // 2. Create unverified Firestore profile
-    await setDoc(doc(db, "users", user.uid), {
-      name: orderData.name,
-      email: orderData.email,
-      whatsapp: orderData.wa,
-      role: 'user',
-      isVerified: false, 
-      createdAt: serverTimestamp()
-    });
+    try {
+      await setDoc(doc(db, "users", user.uid), {
+        name: orderData.name,
+        email: orderData.email,
+        whatsapp: orderData.wa,
+        role: 'user',
+        isVerified: false, 
+        createdAt: serverTimestamp()
+      });
+    } catch (dbErr) {
+      handleFirestoreError(dbErr, OperationType.WRITE, `users/${user.uid}`);
+    }
 
     document.getElementById('display-name')!.textContent = orderData.name;
     const rekCard = document.getElementById('rek-card') as HTMLElement;
@@ -238,7 +289,14 @@ btnNext.addEventListener('click', async () => {
     if (err.code === 'auth/email-already-in-use') {
       alert("Email ini sudah terdaftar. Silakan gunakan email lain atau login jika Anda sudah memiliki akun.");
     } else {
-      alert("Terjadi kesalahan: " + (err.message || String(err)));
+      let msg = err.message || String(err);
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed.error) msg = parsed.error;
+      } catch (e) {
+        // Not a JSON error string
+      }
+      alert("Terjadi kesalahan: " + msg);
     }
     btnNext.disabled = false;
     btnNext.innerHTML = 'Lanjut ke Pembayaran';
@@ -369,10 +427,14 @@ btnConfirm.addEventListener('click', async () => {
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-    await setDoc(doc(db, "users", orderData.uid), { 
-      isVerified: true,
-      expiresAt: expiresAt
-    }, { merge: true });
+    try {
+      await setDoc(doc(db, "users", orderData.uid), { 
+        isVerified: true,
+        expiresAt: expiresAt
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `users/${orderData.uid}`);
+    }
 
     document.getElementById('success-name')!.textContent = orderData.name;
     document.getElementById('success-email')!.textContent = orderData.email;
@@ -414,7 +476,13 @@ btnConfirm.addEventListener('click', async () => {
 
     showStep(2);
   } catch (error: any) {
-    alert(error.message);
+      let msg = error.message || String(error);
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed.error) msg = parsed.error;
+      } catch (e) {
+      }
+    alert(msg);
     btnConfirm.disabled = false;
     btnConfirmText.classList.remove('hidden');
     btnSpinner.classList.add('hidden');

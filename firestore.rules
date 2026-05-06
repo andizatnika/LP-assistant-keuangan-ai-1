@@ -12,14 +12,11 @@ service cloud.firestore {
     
     // Strict schema validation for User Profile
     function isValidUser(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() <= 100
-        && data.email is string && data.email.size() <= 150
-        && data.whatsapp is string && data.whatsapp.size() <= 20
+      return data.name is string 
+        && data.email is string 
+        && data.whatsapp is string 
         && data.role == 'user'
-        && data.isVerified is bool
-        && data.createdAt is timestamp
-        // expiresAt is optional initially, set during verification
-        && (!data.keys().hasAll(['expiresAt']) || data.expiresAt is timestamp);
+        && data.isVerified is bool;
     }
 
     match /users/{userId} {
@@ -27,9 +24,7 @@ service cloud.firestore {
       
       allow create: if isSignedIn() 
         && isOwner(userId)
-        && isValidUser(incoming())
-        && incoming().createdAt == request.time
-        && incoming().isVerified == false;
+        && isValidUser(incoming());
 
       // Allow users to update their profile to verify it
       allow update: if (

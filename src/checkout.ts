@@ -14,7 +14,7 @@ const EMAILJS_SERVICE_ID  = 'service_euvp1wfa';
 const EMAILJS_TEMPLATE_ID = 'template_f0vdyjr';
 const EMAILJS_PUBLIC_KEY  = 'IjIwx_pBHLVTEbyrr';
 const WA_ADMIN            = '6283892802483';
-const CHECKOUT_URL        = 'https://jagokeuangan.com/checkout';
+const CHECKOUT_URL = 'https://jagokeuangan.com/checkout?step=2';
 
 const BANK_MAP: Record<string, { label: string; rek: string; an: string }> = {
   bri:     { label: 'Bank BRI',     rek: '009201001828567', an: 'ANDI ZATNIKA'       },
@@ -65,7 +65,56 @@ const btnConfirmTxt = document.getElementById('btn-confirm-text') as HTMLElement
 const btnSpinner    = document.getElementById('btn-spinner')    as HTMLElement;
 const verifyMsg     = document.getElementById('verify-message') as HTMLElement;
 const btnManualWa   = document.getElementById('btn-manual-wa')  as HTMLButtonElement;
+// ── Auto-redirect ke step 2 kalau ada ?step=2 di URL ─────────────
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('step') === '2') {
+  // Ambil data dari sessionStorage kalau ada
+  const saved = sessionStorage.getItem('keuanganAiOrder');
+  if (saved) {
+    orderData = JSON.parse(saved);
+    
+    const b = BANK_MAP[orderData.bank] || BANK_MAP['bca'];
+    
+    document.getElementById('display-name')!.textContent = orderData.name || 'Kak';
+    
+    const rekCard = document.getElementById('rek-card') as HTMLElement;
+    rekCard.innerHTML = `
+      <p class="font-heading text-lg font-bold text-white mb-2">🏦 ${b.label}</p>
+      <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+      <p class="font-mono text-2xl font-bold tracking-widest text-emerald mb-3">${b.rek}</p>
+      <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">${b.an}</strong></p>
+      <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">${formattedPriceStr}</strong></p>
+      <button type="button"
+        class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition"
+        data-copy="${b.rek}">
+        Salin Nomor Rekening
+      </button>`;
 
+    rekCard.querySelector('.btn-copy')!.addEventListener('click', function(this: HTMLElement) {
+      navigator.clipboard.writeText(this.getAttribute('data-copy')!);
+      const orig = this.innerHTML;
+      this.innerHTML = '✓ Tersalin!';
+      this.classList.add('text-emerald');
+      setTimeout(() => { this.innerHTML = orig; this.classList.remove('text-emerald'); }, 2000);
+    });
+
+    showStep(1); // index 1 = halaman 2 (pembayaran)
+    
+  } else {
+    // Tidak ada data → tampilkan pesan minta isi form dulu
+    const rekCard = document.getElementById('rek-card') as HTMLElement;
+    document.getElementById('display-name')!.textContent = 'Kak';
+    rekCard.innerHTML = `
+      <div class="text-center py-4">
+        <p class="text-amber font-semibold mb-2">⚠️ Sesi habis atau link sudah dipakai</p>
+        <p class="text-gray-400 text-sm mb-4">Silakan daftar ulang untuk melanjutkan pembayaran.</p>
+        <a href="/checkout" class="bg-amber text-darkgreen font-bold py-2 px-6 rounded-full text-sm">
+          Daftar Ulang →
+        </a>
+      </div>`;
+    showStep(1);
+  }
+}
 // ── Init UI ──────────────────────────────────────────────────────
 document.querySelectorAll('.dynamic-price').forEach(el => { el.textContent = formattedPriceStr; });
 document.getElementById('exact-price-warning')!.innerHTML =
@@ -188,7 +237,14 @@ btnNext.addEventListener('click', () => {
     wa:       iWa.value.trim(),
     bank
   };
-
+  
+// Simpan ke sessionStorage untuk link email
+  sessionStorage.setItem('keuanganAiOrder', JSON.stringify({
+    name: orderData.name,
+    email: orderData.email,
+    wa: orderData.wa,
+    bank: orderData.bank
+  }));
   // Tampilkan info rekening di step 2
   document.getElementById('display-name')!.textContent = orderData.name;
 

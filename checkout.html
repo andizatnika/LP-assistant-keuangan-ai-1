@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - Assistant Keuangan AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            darkgreen: '#0B2818',
+            emerald: '#10B981',
+            amber: '#F59E0B',
+            bri: '#003087',
+            mandiri: '#003087',
+            bca: '#006CB7'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Transisi untuk form steps */
+    .step-container { transition: opacity 0.3s ease-in-out; }
+    .hidden-step { opacity: 0; pointer-events: none; position: absolute; visibility: hidden; z-index: -1; top: 0; left: 0; right: 0; }
+    .visible-step { opacity: 1; pointer-events: auto; position: relative; visibility: visible; z-index: 1; }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0B2818; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+    /* Custom Radio Styling */
+    .bank-radio:checked + div { border-color: #10B981; background-color: rgba(16,185,129,0.1); }
+    .bank-radio:checked + div .check-icon { display: block; }
+    
+    /* File Drag & Drop */
+    .dragover { border-color: #10B981 !important; background-color: rgba(16,185,129,0.1) !important; }
+
+    /* Spinner */
+    .loader-spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      width: 24px;
+      height: 24px;
+      animation: spin-loader 1s linear infinite;
+    }
+    @keyframes spin-loader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Custom Checkmark Animation */
+    .success-checkmark {
+      width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: block;
+      stroke-width: 2; stroke: #10B981; stroke-miterlimit: 10;
+      box-shadow: inset 0px 0px 0px #10B981;
+      animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+    }
+    .check-circle {
+      stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #10B981; fill: none;
+      animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+    .check-path {
+      transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48;
+      animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+    }
+    @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+    @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+    @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px rgba(16,185,129,0.1); } }
+
+    /* Fix input backgrounds */
+    input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active{
+        -webkit-box-shadow: 0 0 0 30px #0b2818 inset !important;
+        -webkit-text-fill-color: white !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+  </style>
+</head>
+<body class="bg-[#05140c] text-white font-sans antialiased min-h-screen py-8 px-4 flex justify-center items-start">
+
+  <div class="w-full max-w-[480px] relative">
+    
+    <!-- HEADER APP -->
+    <div class="text-center mb-6">
+      <h1 class="font-heading tracking-tight text-2xl font-extrabold text-amber mb-1">Assistant Keuangan AI</h1>
+      <p class="text-gray-400 text-sm">Checkout Aman & Cepat</p>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="bg-darkgreen border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden text-left">
+      
+      <!-- Halaman 1: FORM PEMESANAN -->
+      <div id="step-1" class="step-container visible-step">
+        
+        <!-- Order Summary & Progress -->
+        <div class="bg-black/40 rounded-2xl p-4 mb-6 border border-white/5 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-gray-400 mb-1">Ringkasan Order</p>
+            <div class="flex items-center gap-2">
+              <span class="bg-emerald/20 text-emerald text-xs px-2 py-0.5 rounded font-bold">✅ Akses 1 Tahun Penuh</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-heading text-xl font-bold text-white">Rp 99.000</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 mb-6">
+          <div class="flex-1 bg-white/10 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-amber w-1/2 h-full rounded-full"></div>
+          </div>
+          <span class="text-xs text-gray-400 font-medium whitespace-nowrap">Langkah 1 dari 2</span>
+        </div>
+
+        <h2 class="font-heading text-xl font-bold mb-6">Lengkapi Data Diri</h2>
+
+        <form id="checkout-form" class="space-y-4">
+          <!-- Nama Lengkap -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1" for="nama">Nama Lengkap</label>
+            <input type="text" id="nama" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition" placeholder="Masukkan nama lengkap kamu" required>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1" for="email">Alamat Email</label>
+            <input type="email" id="email" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition" placeholder="email@kamu.com" required>
+            <p class="text-xs text-gray-500 mt-1">Email ini akan menjadi username untuk login.</p>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1" for="password">Password</label>
+            <div class="relative">
+              <input type="password" id="password" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition pr-12" placeholder="Buat password minimal 8 karakter" required>
+              <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1">
+                <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+              </button>
+            </div>
+            <!-- Strength Indicator -->
+            <div class="flex items-center gap-2 mt-2">
+              <div class="flex-1 h-1 rounded-full bg-white/10 overflow-hidden"><div id="strength-1" class="h-full w-0 transition-all duration-300"></div></div>
+              <div class="flex-1 h-1 rounded-full bg-white/10 overflow-hidden"><div id="strength-2" class="h-full w-0 transition-all duration-300"></div></div>
+              <div class="flex-1 h-1 rounded-full bg-white/10 overflow-hidden"><div id="strength-3" class="h-full w-0 transition-all duration-300"></div></div>
+              <span id="strength-text" class="text-xs text-gray-500 w-12 text-right">Lemah</span>
+            </div>
+          </div>
+
+          <!-- Konfirmasi Password -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1" for="confirm-password">Konfirmasi Password</label>
+            <div class="relative">
+              <input type="password" id="confirm-password" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition pr-10" placeholder="Ketik ulang password" required>
+              <div id="match-icon" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hidden"></div>
+            </div>
+          </div>
+
+          <!-- No WhatsApp -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1" for="whatsapp">Nomor WhatsApp</label>
+            <input type="tel" id="whatsapp" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition" placeholder="08xx-xxxx-xxxx" required>
+            <p class="text-xs text-gray-500 mt-1">Untuk pengiriman info akun dan notifikasi jadwal bayar cicilan.</p>
+          </div>
+
+          <!-- Metode Pembayaran -->
+          <div class="pt-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Metode Pembayaran</label>
+            <div class="space-y-3">
+              
+              <!-- BRI -->
+              <label class="relative block cursor-pointer group">
+                <input type="radio" name="bank" value="bri" class="peer sr-only bank-radio" checked>
+                <div class="border border-white/10 rounded-xl p-4 hover:bg-white/5 transition flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <span class="font-heading font-extrabold text-white bg-[#003087] px-2 py-1 rounded text-sm tracking-wider">BRI</span>
+                    <div>
+                      <p class="text-white font-semibold">Bank BRI</p>
+                      <p class="text-xs text-gray-400">Transfer Manual</p>
+                    </div>
+                  </div>
+                  <svg class="w-6 h-6 text-emerald hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+              </label>
+
+              <!-- Mandiri -->
+              <label class="relative block cursor-pointer group">
+                <input type="radio" name="bank" value="mandiri" class="peer sr-only bank-radio">
+                <div class="border border-white/10 rounded-xl p-4 hover:bg-white/5 transition flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <span class="font-heading font-extrabold text-[#003087] bg-yellow-400 px-2 py-1 rounded text-sm tracking-wider">Mandiri</span>
+                    <div>
+                      <p class="text-white font-semibold">Bank Mandiri</p>
+                      <p class="text-xs text-gray-400">Transfer Manual</p>
+                    </div>
+                  </div>
+                  <svg class="w-6 h-6 text-emerald hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+              </label>
+
+              <!-- BCA -->
+              <label class="relative block cursor-pointer group">
+                <input type="radio" name="bank" value="bca" class="peer sr-only bank-radio">
+                <div class="border border-white/10 rounded-xl p-4 hover:bg-white/5 transition flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <span class="font-heading font-extrabold text-white bg-[#006CB7] px-2 py-1 rounded text-sm italic tracking-wider">BCA</span>
+                    <div>
+                      <p class="text-white font-semibold">Bank BCA</p>
+                      <p class="text-xs text-gray-400">Transfer Manual</p>
+                    </div>
+                  </div>
+                  <svg class="w-6 h-6 text-emerald hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <div class="pt-6">
+            <button type="button" id="btn-next" disabled class="w-full bg-gray-500 text-gray-300 font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 cursor-not-allowed">
+              Lanjut ke Pembayaran <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+            <p class="text-center text-xs text-gray-500 mt-3">🔒 Data kamu aman & terenkripsi. Tidak ada biaya tersembunyi.</p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Halaman 2: DETAIL PEMBAYARAN & UPLOAD -->
+      <div id="step-2" class="step-container hidden-step">
+        
+        <div class="flex items-center gap-3 mb-6">
+          <div class="flex-1 bg-white/10 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-amber w-full h-full rounded-full"></div>
+          </div>
+          <span class="text-xs text-gray-400 font-medium whitespace-nowrap">Langkah 2 dari 2</span>
+        </div>
+
+        <h2 class="font-heading text-xl font-bold mb-2">Halo <span id="display-name" class="text-emerald">Kak</span>! 👋</h2>
+        <p class="text-gray-400 text-sm mb-6">Selesaikan pembayaranmu dengan transfer ke rekening di bawah ini.</p>
+
+        <!-- Instruksi Transfer Card -->
+        <div id="rek-card" class="bg-black/50 border border-white/10 rounded-2xl p-5 mb-6 shadow-inner relative overflow-hidden">
+            <!-- Isi Rekening di-inject dari JS -->
+        </div>
+
+        <p class="text-xs text-red-400 text-center bg-red-500/10 border border-red-500/20 py-2 px-3 rounded-lg font-medium mb-8">
+          ⚠️ Transfer TEPAT <strong>Rp 99.000</strong> (tidak kurang/lebih) agar mudah diverifikasi.
+        </p>
+
+        <!-- Langkah Pembayaran -->
+        <div class="space-y-4 mb-8">
+          <div class="flex gap-4 items-start">
+            <div class="w-8 h-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold text-sm shrink-0">1</div>
+            <div>
+              <p class="font-semibold text-white">Transfer Pembayaran</p>
+              <p class="text-xs text-gray-400 mt-1">Lakukan transfer sebesar Rp 99.000 ke rekening yang tertera di atas via Mobile Banking atau ATM.</p>
+            </div>
+          </div>
+          <div class="flex gap-4 items-start">
+            <div class="w-8 h-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold text-sm shrink-0">2</div>
+            <div>
+              <p class="font-semibold text-white">Simpan Bukti Transfer</p>
+              <p class="text-xs text-gray-400 mt-1">Jangan lupa screenshot bukti sukses transfer dari m-banking atau foto struk ATM.</p>
+            </div>
+          </div>
+          <div class="flex gap-4 items-start">
+            <div class="w-8 h-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold text-sm shrink-0">3</div>
+            <div>
+              <p class="font-semibold text-white">Upload Bukti</p>
+              <p class="text-xs text-gray-400 mt-1">Unggah foto bukti transfer di bawah ini lalu klik konfirmasi untuk memproses pesanan.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Upload -->
+        <form id="upload-form" class="space-y-4 pt-4 border-t border-white/10">
+          <p class="font-heading font-bold text-white mb-2">Upload Bukti Transfer</p>
+          
+          <div id="drop-area" class="border-2 border-dashed border-white/20 hover:border-emerald/50 bg-black/30 rounded-xl min-h-[160px] flex flex-col items-center justify-center p-6 text-center transition cursor-pointer relative">
+            <input type="file" id="file-input" accept="image/jpeg, image/png, image/jpg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+            
+            <!-- Default State -->
+            <div id="upload-prompt" class="flex flex-col items-center pointer-events-none">
+              <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              <p class="text-sm font-medium text-white">Drag & drop foto bukti transfer di sini</p>
+              <p class="text-xs text-gray-500 mt-1">atau klik untuk pilih file (Max 5MB)</p>
+            </div>
+
+            <!-- Preview State -->
+            <div id="upload-preview" class="hidden flex-col items-center w-full z-20 relative pointer-events-auto">
+              <!-- X button is relative to this container -->
+              <button type="button" id="remove-file" class="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition shadow-lg z-30">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+              <img id="preview-image" src="" alt="Preview" class="max-h-24 rounded-lg shadow-md mb-3 border border-white/10 object-cover">
+              <p id="file-name" class="text-sm font-semibold truncate w-full px-2 text-emerald"></p>
+              <p id="file-size" class="text-xs text-gray-400 mt-0.5"></p>
+            </div>
+          </div>
+
+          <!-- Catatan -->
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-300 mb-1" for="catatan">Catatan (opsional)</label>
+            <textarea id="catatan" rows="2" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald focus:ring-1 focus:ring-emerald transition resize-none" placeholder="Misal: sudah transfer pukul 14.30 via BRI mobile"></textarea>
+          </div>
+
+          <button type="button" id="btn-confirm" disabled class="w-full bg-gray-500 text-gray-300 font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 cursor-not-allowed mt-4">
+            <span id="btn-confirm-text">✅ Konfirmasi Pembayaran</span>
+            <div id="btn-spinner" class="loader-spinner hidden"></div>
+          </button>
+        </form>
+      </div>
+
+      <!-- Halaman 3: SUKSES -->
+      <div id="step-3" class="step-container hidden-step text-center py-8">
+        
+        <svg class="success-checkmark mb-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+          <circle class="check-circle" cx="26" cy="26" r="25" fill="none"/>
+          <path class="check-path" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+
+        <h2 class="font-heading text-2xl md:text-3xl font-extrabold text-white mb-4">Pembayaran Sedang Diverifikasi! 🎉</h2>
+        
+        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-8">
+          Terima kasih <strong id="success-name" class="text-emerald">...</strong>! Kami telah menerima detail pesananmu. Kami akan segera memverifikasi pembayaran dan mengirimkan info akses ke <strong id="success-email" class="text-white">...</strong> dalam waktu maksimal 1x24 jam.
+        </p>
+
+        <div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 mb-6 text-left flex gap-3">
+          <div class="text-2xl">📱</div>
+          <div>
+            <p class="font-semibold text-blue-200 text-sm mb-1">Join Komunitas Telegram</p>
+            <p class="text-xs text-blue-300">Sambil menunggu, gabung ke grup eksklusif kami untuk diskusi soal planning keuangan. <a href="#" class="underline font-bold text-blue-400">Klik di sini</a></p>
+          </div>
+        </div>
+
+        <div class="mb-8">
+          <a id="btn-wa" href="#" target="_blank" class="inline-flex justify-center items-center w-full bg-[#25D366] hover:bg-green-600 text-white font-heading font-bold text-base py-4 rounded-full transition shadow-[0_5px_15px_rgba(37,211,102,0.3)] gap-2">
+            📱 Kirim Konfirmasi via WhatsApp
+          </a>
+          <p class="text-xs text-gray-400 mt-3">Klik tombol di atas untuk mengirim bukti transfer via WhatsApp</p>
+        </div>
+
+        <p class="text-sm text-gray-400 mb-8">
+          Butuh bantuan? Hubungi CS kami via WhatsApp di <br> <strong class="text-white">0812-3456-7890</strong>
+        </p>
+
+        <a href="index.html" class="inline-block w-full bg-white/10 hover:bg-white/20 text-white font-heading font-bold text-base py-4 rounded-full transition border border-white/5">
+          Kembali ke Beranda
+        </a>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- State & DOM Elements ---
+    let orderData = {};
+    const steps = [
+      document.getElementById('step-1'),
+      document.getElementById('step-2'),
+      document.getElementById('step-3')
+    ];
+    
+    // Page 1 Elements
+    const form1 = document.getElementById('checkout-form');
+    const iNama = document.getElementById('nama');
+    const iEmail = document.getElementById('email');
+    const iPass = document.getElementById('password');
+    const iConfPass = document.getElementById('confirm-password');
+    const iWa = document.getElementById('whatsapp');
+    const btnNext = document.getElementById('btn-next');
+    
+    // Password Elements
+    const togglePass = document.getElementById('toggle-password');
+    const eyeIcon = document.getElementById('eye-icon');
+    const matchIcon = document.getElementById('match-icon');
+    const [str1, str2, str3] = [document.getElementById('strength-1'), document.getElementById('strength-2'), document.getElementById('strength-3')];
+    const strText = document.getElementById('strength-text');
+
+    // --- Utility Functions ---
+    const showStep = (stepIndex) => {
+      steps.forEach((el, idx) => {
+        if (idx === stepIndex) {
+          el.classList.remove('hidden-step');
+          el.classList.add('visible-step');
+        } else {
+          el.classList.remove('visible-step');
+          el.classList.add('hidden-step');
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // --- Validation Logic (Page 1) ---
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const validatePassword = (pass) => {
+      // Min 8 chars, at least 1 uppercase, at least 1 number
+      return pass.length >= 8 && /[A-Z]/.test(pass) && /[0-9]/.test(pass);
+    };
+
+    const updateStrength = (pass) => {
+      let score = 0;
+      if(pass.length >= 6) score += 1;
+      if(pass.length >= 8 && /[0-9]/.test(pass)) score += 1;
+      if(/[A-Z]/.test(pass) && /[^a-zA-Z0-9]/.test(pass)) score += 1;
+
+      // Reset
+      [str1, str2, str3].forEach(el => { el.style.width = '0%'; el.className = 'h-full w-0 transition-all duration-300'; });
+      
+      if(pass.length === 0) {
+        strText.textContent = 'Lemah';
+        return;
+      }
+      
+      if(score === 1) {
+        str1.style.width = '100%'; str1.classList.add('bg-red-500');
+        strText.textContent = 'Lemah'; strText.classList.replace('text-amber','text-red-500'); strText.classList.replace('text-emerald','text-red-500');
+      } else if (score === 2) {
+        str1.style.width = '100%'; str1.classList.add('bg-amber');
+        str2.style.width = '100%'; str2.classList.add('bg-amber');
+        strText.textContent = 'Sedang'; strText.classList.replace('text-red-500','text-amber'); strText.classList.replace('text-emerald','text-amber');
+      } else if (score >= 3) {
+        str1.style.width = '100%'; str1.classList.add('bg-emerald');
+        str2.style.width = '100%'; str2.classList.add('bg-emerald');
+        str3.style.width = '100%'; str3.classList.add('bg-emerald');
+        strText.textContent = 'Kuat'; strText.classList.replace('text-red-500','text-emerald'); strText.classList.replace('text-amber','text-emerald');
+      }
+    };
+
+    const checkFormValidity = () => {
+      const isNamaValid = iNama.value.trim() !== '';
+      const isEmailValid = validateEmail(iEmail.value);
+      const isPassValid = validatePassword(iPass.value);
+      const isConfValid = iPass.value !== '' && iPass.value === iConfPass.value;
+      const isWaValid = iWa.value.trim().length >= 10;
+      const bankSelected = document.querySelector('input[name="bank"]:checked') !== null;
+
+      // Update match icon
+      if(iConfPass.value !== '') {
+        matchIcon.classList.remove('hidden');
+        if(isConfValid) {
+          matchIcon.innerHTML = `<svg class="w-5 h-5 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+        } else {
+          matchIcon.innerHTML = `<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+        }
+      } else {
+        matchIcon.classList.add('hidden');
+      }
+
+      if(isNamaValid && isEmailValid && isPassValid && isConfValid && isWaValid && bankSelected) {
+        btnNext.disabled = false;
+        btnNext.className = "w-full bg-amber hover:bg-yellow-500 text-darkgreen font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(245,158,11,0.2)]";
+      } else {
+        btnNext.disabled = true;
+        btnNext.className = "w-full bg-gray-500 text-gray-300 font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 cursor-not-allowed";
+      }
+    };
+
+    // Event Listeners for Validation
+    [iNama, iEmail, iPass, iConfPass, iWa].forEach(el => {
+      el.addEventListener('input', checkFormValidity);
+    });
+    document.querySelectorAll('.bank-radio').forEach(radio => {
+      radio.addEventListener('change', checkFormValidity);
+    });
+
+    iPass.addEventListener('input', (e) => updateStrength(e.target.value));
+
+    // Toggle Password
+    togglePass.addEventListener('click', () => {
+      if(iPass.type === 'password') {
+        iPass.type = 'text';
+        eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>`;
+      } else {
+        iPass.type = 'password';
+        eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>`;
+      }
+    });
+
+    // --- Action Next (Go to Page 2) ---
+    btnNext.addEventListener('click', () => {
+      const bank = document.querySelector('input[name="bank"]:checked').value;
+      orderData = {
+        name: iNama.value.trim(),
+        email: iEmail.value.trim(),
+        wa: iWa.value.trim(),
+        bank: bank
+      };
+      
+      // Save to storage
+      sessionStorage.setItem('keuanganAiOrder', JSON.stringify(orderData));
+
+      // Set Page 2 info
+      document.getElementById('display-name').textContent = orderData.name;
+      
+      const rekCard = document.getElementById('rek-card');
+      if(bank === 'bri') {
+        rekCard.innerHTML = `
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="font-heading text-lg font-bold text-white mb-2">🏦 Bank BRI</p>
+              <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+              <p class="font-mono text-2xl font-bold tracking-widest text-emerald" id="rek-num">009201001828567</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">ANDI ZATNIKA</strong></p>
+          <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">Rp 99.000</strong></p>
+          <button type="button" class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition" data-copy="009201001828567">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            Salin Nomor Rekening
+          </button>
+        `;
+      } else if (bank === 'mandiri') {
+        rekCard.innerHTML = `
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="font-heading text-lg font-bold text-white mb-2">🏦 Bank Mandiri</p>
+              <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+              <p class="font-mono text-xl md:text-2xl font-bold tracking-widest text-emerald" id="rek-num">1820004264586</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">ANDI ZATNIKA</strong></p>
+          <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">Rp 99.000</strong></p>
+          <button type="button" class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition" data-copy="1820004264586">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            Salin Nomor Rekening
+          </button>
+        `;
+      } else if (bank === 'bca') {
+        rekCard.innerHTML = `
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="font-heading text-lg font-bold text-white mb-2">🏦 Bank BCA</p>
+              <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+              <p class="font-mono text-2xl font-bold tracking-widest text-emerald" id="rek-num">0383175779</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">HANA SUNDARI PUTRI</strong></p>
+          <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">Rp 99.000</strong></p>
+          <button type="button" class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition" data-copy="0383175779">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            Salin Nomor Rekening
+          </button>
+        `;
+      }
+
+      // Reattach copy event listener
+      document.querySelector('.btn-copy').addEventListener('click', function() {
+        const num = this.getAttribute('data-copy');
+        navigator.clipboard.writeText(num);
+        const originalText = this.innerHTML;
+        this.innerHTML = `<svg class="w-4 h-4 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ✓ Tersalin!`;
+        this.classList.add('text-emerald');
+        setTimeout(() => {
+          this.innerHTML = originalText;
+          this.classList.remove('text-emerald');
+        }, 2000);
+      });
+
+      showStep(1);
+    });
+
+    // --- File Upload Logic ---
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('file-input');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const uploadPreview = document.getElementById('upload-preview');
+    const previewImage = document.getElementById('preview-image');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const removeBtn = document.getElementById('remove-file');
+    const btnConfirm = document.getElementById('btn-confirm');
+
+    // Prevent defaults
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    // Highlight
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+    });
+
+    // Handle Drop
+    dropArea.addEventListener('drop', (e) => {
+      let dt = e.dataTransfer;
+      let files = dt.files;
+      handleFiles(files);
+    });
+    
+    // Handle Click Selection
+    fileInput.addEventListener('change', function() {
+      handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+      if(files.length === 0) return;
+      const file = files[0];
+      
+      // Validation size max 5MB
+      if(file.size > 5 * 1024 * 1024) {
+        alert("Ukuran file maksimal 5MB");
+        resetUpload();
+        return;
+      }
+      // Validation type
+      if(!file.type.match('image.*')) {
+        alert("Hanya format gambar (JPG, PNG) yang diperbolehkan");
+        resetUpload();
+        return;
+      }
+
+      previewFile(file);
+    }
+
+    function previewFile(file) {
+      let reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = function() {
+        previewImage.src = reader.result;
+        fileName.textContent = file.name;
+        // Calc size
+        const mb = file.size / (1024*1024);
+        if(mb >= 1) fileSize.textContent = mb.toFixed(2) + ' MB';
+        else fileSize.textContent = (file.size / 1024).toFixed(0) + ' KB';
+
+        uploadPrompt.classList.add('hidden');
+        uploadPreview.classList.remove('hidden');
+        uploadPreview.classList.add('flex');
+        
+        fileInput.classList.add('hidden');
+
+        // Enable confirm button
+        btnConfirm.disabled = false;
+        btnConfirm.className = "w-full bg-emerald hover:bg-green-500 text-white font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(16,185,129,0.3)] mt-4";
+      }
+    }
+
+    function resetUpload() {
+      fileInput.value = '';
+      previewImage.src = '';
+      uploadPrompt.classList.remove('hidden');
+      uploadPreview.classList.add('hidden');
+      uploadPreview.classList.remove('flex');
+      fileInput.classList.remove('hidden');
+
+      // Disable confirm button
+      btnConfirm.disabled = true;
+      btnConfirm.className = "w-full bg-gray-500 text-gray-300 font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 cursor-not-allowed mt-4";
+    }
+
+    // Bugfix for Remove Button: ensure the event bubbles but doesn't trigger file dialog underneath
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      resetUpload();
+    });
+
+    // --- Action Confirm (Go to Page 3) ---
+    const btnConfirmText = document.getElementById('btn-confirm-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+
+    btnConfirm.addEventListener('click', () => {
+      // Show loading
+      btnConfirm.disabled = true;
+      btnConfirmText.classList.add('hidden');
+      btnSpinner.classList.remove('hidden');
+
+      // Setup success page data
+      document.getElementById('success-name').textContent = orderData.name;
+      document.getElementById('success-email').textContent = orderData.email;
+
+      // 1. Google Sheets Integration
+      const sheetData = {
+        nama: orderData.name,
+        email: orderData.email,
+        whatsapp: orderData.wa,
+        bank: orderData.bank.toUpperCase(),
+        timestamp: new Date().toISOString()
+      };
+
+      fetch('https://script.google.com/macros/s/AKfycbxwiWCQbl9uXvT0WNh3Y_aQk8XIEIjSJHUN5ZMORwAi7xtE4OFgF0S8F2a4R7PpQufhnw/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sheetData)
+      }).catch(err => console.error(err));
+
+      // 2. WhatsApp Integration
+      const waNumber = "6283892802483"; 
+      
+      const tanggalFormat = new Date().toLocaleString('id-ID', {
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const waMsg = `🔔 *ORDER BARU — Assistant Keuangan AI*
+
+👤 Nama: ${orderData.name}
+📧 Email: ${orderData.email}  
+📱 WhatsApp: ${orderData.wa}
+🏦 Bank Transfer: ${orderData.bank.toUpperCase()}
+💰 Jumlah: Rp 99.000
+🕐 Waktu: ${tanggalFormat}
+
+_Harap verifikasi pembayaran dan aktifkan akun._`;
+
+      const encodedMsg = encodeURIComponent(waMsg);
+      const waUrl = `https://wa.me/${waNumber}?text=${encodedMsg}`;
+
+      // Set URL for the success page WA button
+      document.getElementById('btn-wa').href = waUrl;
+
+      // Open WA in new tab immediately
+      window.open(waUrl, '_blank');
+
+      // 3. Transition to success page
+      setTimeout(() => {
+        showStep(2);
+      }, 1500);
+    });
+
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout - Assistant Keuangan AI</title>
+  <title>Checkout Aman - Assistant Keuangan AI</title>
   
   <!-- Meta Pixel Code -->
   <script>
@@ -23,7 +23,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -34,7 +34,7 @@
             emerald: '#10B981',
             amber: '#F59E0B',
             bri: '#003087',
-            mandiri: '#003087',
+            mandiri: '#FDB813',
             bca: '#006CB7'
           },
           fontFamily: {
@@ -46,341 +46,241 @@
     }
   </script>
   <style>
-    /* Transisi untuk form steps */
-    .step-container { transition: opacity 0.3s ease-in-out; }
-    .hidden-step { opacity: 0; pointer-events: none; position: absolute; visibility: hidden; z-index: -1; top: 0; left: 0; right: 0; }
-    .visible-step { opacity: 1; pointer-events: auto; position: relative; visibility: visible; z-index: 1; }
+    .step-container { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .hidden-step { opacity: 0; pointer-events: none; position: absolute; visibility: hidden; transform: translateY(20px); }
+    .visible-step { opacity: 1; pointer-events: auto; position: relative; visibility: visible; transform: translateY(0); }
     
-    /* Custom scrollbar */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #0B2818; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-    /* Custom Radio Styling */
-    .bank-radio:checked + div { border-color: #10B981; background-color: rgba(16,185,129,0.1); }
+    .bank-radio:checked + div { border-color: #10B981; background-color: rgba(16,185,129,0.05); }
     .bank-radio:checked + div .check-icon { display: block; }
     
-    /* File Drag & Drop */
     .dragover { border-color: #10B981 !important; background-color: rgba(16,185,129,0.1) !important; }
 
-    /* Spinner */
     .loader-spinner {
-      border: 3px solid rgba(255,255,255,0.3);
+      border: 3px solid rgba(255,255,255,0.1);
       border-radius: 50%;
-      border-top: 3px solid white;
+      border-top: 3px solid #10B981;
       width: 24px;
       height: 24px;
       animation: spin-loader 1s linear infinite;
     }
     @keyframes spin-loader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Custom Checkmark Animation */
-    .success-checkmark {
-      width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: block;
-      stroke-width: 2; stroke: #10B981; stroke-miterlimit: 10;
-      box-shadow: inset 0px 0px 0px #10B981;
-      animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
-    }
-    .check-circle {
-      stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #10B981; fill: none;
-      animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-    }
-    .check-path {
-      transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48;
-      animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
-    }
-    @keyframes stroke { 100% { stroke-dashoffset: 0; } }
-    @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
-    @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px rgba(16,185,129,0.1); } }
-
     /* Fix input backgrounds */
     input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active{
         -webkit-box-shadow: 0 0 0 30px #0b2818 inset !important;
         -webkit-text-fill-color: white !important;
-        transition: background-color 5000s ease-in-out 0s;
     }
   </style>
 </head>
-<body class="bg-[#05140c] text-white font-sans antialiased min-h-screen py-8 px-4 flex justify-center items-start">
-  <!-- Meta Pixel Code (noscript) -->
-  <noscript><img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=1554358551830778&ev=PageView&noscript=1"
-  /></noscript>
-  <!-- End Meta Pixel Code (noscript) -->
+<body class="bg-[#05140c] text-white font-sans antialiased min-h-screen py-10 px-4">
+  
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1554358551830778&ev=PageView&noscript=1"/></noscript>
 
-  <div class="w-full max-w-[480px] relative">
-    
-    <!-- HEADER APP -->
-    <div class="text-center mb-6">
-      <h1 class="font-heading tracking-tight text-2xl font-extrabold text-amber mb-1">Assistant Keuangan AI</h1>
-      <p class="text-gray-400 text-sm">Checkout Aman & Cepat</p>
+  <div class="max-w-md mx-auto">
+    <!-- Branding -->
+    <div class="text-center mb-10">
+      <h1 class="font-heading tracking-tight text-3xl font-extrabold text-amber mb-2">Assistant Keuangan AI</h1>
+      <p class="text-gray-400 text-sm">Satu langkah lagi menuju kebebasan finansial</p>
     </div>
 
-    <!-- MAIN CARD -->
-    <div class="bg-darkgreen border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden text-left">
+    <!-- Container -->
+    <div class="bg-darkgreen border border-white/10 rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
       
-      <!-- Halaman 1: FORM PEMESANAN -->
-      <div id="step-1" class="step-container visible-step">
+      <!-- Progress Bar Area -->
+      <div class="px-8 pt-8">
+        <div class="flex items-center justify-between mb-2">
+          <span id="step-count-text" class="text-[10px] uppercase tracking-widest font-bold text-emerald">Langkah 1 dari 2</span>
+          <span class="text-[10px] uppercase tracking-widest font-bold text-gray-500">Form Pendaftaran</span>
+        </div>
+        <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+          <div id="progress-bar" class="h-full bg-emerald transition-all duration-500 w-1/2"></div>
+        </div>
+      </div>
+
+      <div class="p-8">
         
-        <!-- Order Summary & Progress -->
-        <div class="bg-black/40 rounded-2xl p-4 mb-6 border border-white/5 flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-400 mb-1">Ringkasan Order</p>
-            <div class="flex items-center gap-2">
-              <span class="bg-emerald/20 text-emerald text-xs px-2 py-0.5 rounded font-bold">✅ Akses 1 Tahun Penuh</span>
+        <!-- STEP 1: DATA DIRI -->
+        <div id="step-1" class="step-container visible-step">
+          <div class="mb-8">
+            <h2 class="font-heading text-2xl font-bold mb-2">Lengkapi Data Akun</h2>
+            <p class="text-gray-400 text-sm">Data ini akan digunakan untuk login ke aplikasi.</p>
+          </div>
+
+          <form id="checkout-form" class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2" for="nama">Nama Lengkap</label>
+              <input type="text" id="nama" class="w-full bg-black/30 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald focus:ring-1 focus:ring-emerald transition" placeholder="Masukkan nama lengkap" required>
             </div>
-          </div>
-          <div class="text-right">
-            <p class="font-heading text-xl font-bold text-white dynamic-price">Rp 99.000</p>
-          </div>
-        </div>
 
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex-1 bg-white/10 h-1.5 rounded-full overflow-hidden">
-            <div class="bg-amber w-1/2 h-full rounded-full"></div>
-          </div>
-          <span class="text-xs text-gray-400 font-medium whitespace-nowrap">Langkah 1 dari 2</span>
-        </div>
-
-        <h2 class="font-heading text-xl font-bold mb-6">Lengkapi Data Diri</h2>
-
-        <form id="checkout-form" class="space-y-4">
-          <!-- Nama Lengkap -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1" for="nama">Nama Lengkap</label>
-            <input type="text" id="nama" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition" placeholder="Masukkan nama lengkap kamu" required>
-          </div>
-
-          <!-- Email -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1" for="email">Alamat Email</label>
-            <input type="email" id="email" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition" placeholder="email@kamu.com" required>
-            <p class="text-xs text-gray-500 mt-1">Email ini akan menjadi username untuk login.</p>
-          </div>
-
-          <!-- Password -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1" for="password">Password</label>
-            <div class="relative">
-              <input type="password" id="password" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition pr-12" placeholder="Buat password minimal 8 karakter" required>
-              <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1">
-                <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-              </button>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2" for="email">Alamat Email</label>
+              <input type="email" id="email" class="w-full bg-black/30 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald focus:ring-1 focus:ring-emerald transition" placeholder="email@kamu.com" required>
             </div>
-            <!-- Strength Indicator -->
-            <div class="flex items-center gap-2 mt-2">
-              <div class="flex-1 h-1 rounded-full bg-white/10 overflow-hidden"><div id="strength-1" class="h-full w-0 transition-all duration-300"></div></div>
-              <div class="flex-1 h-1 rounded-full bg-white/10 overflow-hidden"><div id="strength-2" class="h-full w-0 transition-all duration-300"></div></div>
-              <div class="flex-1 h-1 rounded-full bg-white/10 overflow-hidden"><div id="strength-3" class="h-full w-0 transition-all duration-300"></div></div>
-              <span id="strength-text" class="text-xs text-gray-500 w-12 text-right">Lemah</span>
-            </div>
-          </div>
 
-          <!-- Konfirmasi Password -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1" for="confirm-password">Konfirmasi Password</label>
-            <div class="relative">
-              <input type="password" id="confirm-password" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition pr-10" placeholder="Ketik ulang password" required>
-              <div id="match-icon" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hidden"></div>
-            </div>
-          </div>
-
-          <!-- No WhatsApp -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1" for="whatsapp">Nomor WhatsApp</label>
-            <input type="tel" id="whatsapp" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber transition" placeholder="08xx-xxxx-xxxx" required>
-            <p class="text-xs text-gray-500 mt-1">Untuk pengiriman info akun dan notifikasi jadwal bayar cicilan.</p>
-          </div>
-
-          <!-- Metode Pembayaran -->
-          <div class="pt-4">
-            <label class="block text-sm font-medium text-gray-300 mb-2">Metode Pembayaran</label>
-            <div class="space-y-3">
-              
-              <!-- BRI -->
-              <label class="relative block cursor-pointer group">
-                <input type="radio" name="bank" value="bri" class="peer sr-only bank-radio" checked>
-                <div class="border border-white/10 rounded-xl p-4 hover:bg-white/5 transition flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <span class="font-heading font-extrabold text-white bg-[#003087] px-2 py-1 rounded text-sm tracking-wider">BRI</span>
-                    <div>
-                      <p class="text-white font-semibold">Bank BRI</p>
-                      <p class="text-xs text-gray-400">Transfer Manual</p>
-                    </div>
-                  </div>
-                  <svg class="w-6 h-6 text-emerald hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2" for="password">Password</label>
+                <div class="relative">
+                  <input type="password" id="password" class="w-full bg-black/30 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald focus:ring-1 focus:ring-emerald transition pr-12" placeholder="********" required>
+                  <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition">
+                    <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  </button>
                 </div>
-              </label>
-
-              <!-- Mandiri -->
-              <label class="relative block cursor-pointer group">
-                <input type="radio" name="bank" value="mandiri" class="peer sr-only bank-radio">
-                <div class="border border-white/10 rounded-xl p-4 hover:bg-white/5 transition flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <span class="font-heading font-extrabold text-[#003087] bg-yellow-400 px-2 py-1 rounded text-sm tracking-wider">Mandiri</span>
-                    <div>
-                      <p class="text-white font-semibold">Bank Mandiri</p>
-                      <p class="text-xs text-gray-400">Transfer Manual</p>
-                    </div>
-                  </div>
-                  <svg class="w-6 h-6 text-emerald hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-              </label>
-
-              <!-- BCA -->
-              <label class="relative block cursor-pointer group">
-                <input type="radio" name="bank" value="bca" class="peer sr-only bank-radio">
-                <div class="border border-white/10 rounded-xl p-4 hover:bg-white/5 transition flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <span class="font-heading font-extrabold text-white bg-[#006CB7] px-2 py-1 rounded text-sm italic tracking-wider">BCA</span>
-                    <div>
-                      <p class="text-white font-semibold">Bank BCA</p>
-                      <p class="text-xs text-gray-400">Transfer Manual</p>
-                    </div>
-                  </div>
-                  <svg class="w-6 h-6 text-emerald hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-              </label>
-
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2" for="confirm-password">Konfirmasi</label>
+                <input type="password" id="confirm-password" class="w-full bg-black/30 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald focus:ring-1 focus:ring-emerald transition" placeholder="********" required>
+              </div>
             </div>
-          </div>
 
-          <div class="pt-6">
-            <button type="button" id="btn-next" class="w-full bg-amber hover:bg-yellow-500 text-darkgreen font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(245,158,11,0.2)]">
-              Lanjut ke Pembayaran <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2" for="whatsapp">No. WhatsApp</label>
+              <input type="tel" id="whatsapp" class="w-full bg-black/30 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-emerald focus:ring-1 focus:ring-emerald transition" placeholder="08xxxxxxxxxx" required>
+            </div>
+
+            <div class="pt-2">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Metode Pembayaran (Transfer)</label>
+              <div class="grid grid-cols-3 gap-3">
+                <label class="cursor-pointer relative group">
+                  <input type="radio" name="bank" value="bri" class="peer sr-only bank-radio" checked>
+                  <div class="border border-white/10 rounded-2xl p-3 text-center hover:bg-white/5 transition flex flex-col items-center">
+                    <span class="font-extrabold text-[10px] bg-bri px-2 py-0.5 rounded text-white mb-2">BRI</span>
+                    <span class="text-[10px] font-bold text-gray-400">Manual</span>
+                  </div>
+                  <div class="absolute -top-1 -right-1 bg-emerald text-white p-0.5 rounded-full scale-0 peer-checked:scale-100 transition-transform">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                </label>
+
+                <label class="cursor-pointer relative group">
+                  <input type="radio" name="bank" value="mandiri" class="peer sr-only bank-radio">
+                  <div class="border border-white/10 rounded-2xl p-3 text-center hover:bg-white/5 transition flex flex-col items-center">
+                    <span class="font-extrabold text-[10px] bg-[#FDB813] px-2 py-0.5 rounded text-[#003087] mb-2">MANDIRI</span>
+                    <span class="text-[10px] font-bold text-gray-400">Manual</span>
+                  </div>
+                  <div class="absolute -top-1 -right-1 bg-emerald text-white p-0.5 rounded-full scale-0 peer-checked:scale-100 transition-transform">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                </label>
+
+                <label class="cursor-pointer relative group">
+                  <input type="radio" name="bank" value="bca" class="peer sr-only bank-radio">
+                  <div class="border border-white/10 rounded-2xl p-3 text-center hover:bg-white/5 transition flex flex-col items-center">
+                    <span class="font-extrabold text-[10px] bg-bca px-2 py-0.5 rounded text-white mb-2">BCA</span>
+                    <span class="text-[10px] font-bold text-gray-400">Manual</span>
+                  </div>
+                  <div class="absolute -top-1 -right-1 bg-emerald text-white p-0.5 rounded-full scale-0 peer-checked:scale-100 transition-transform">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <button type="button" id="btn-next" class="w-full bg-emerald hover:bg-green-500 text-white font-bold py-5 rounded-2xl transition flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(16,185,129,0.3)] mt-4">
+              Lanjut ke Pembayaran 
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </button>
-            <p class="text-center text-xs text-gray-500 mt-3">🔒 Data kamu aman & terenkripsi. Tidak ada biaya tersembunyi.</p>
-          </div>
-        </form>
-      </div>
-
-      <!-- Halaman 2: DETAIL PEMBAYARAN & UPLOAD -->
-      <div id="step-2" class="step-container hidden-step">
-        
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex-1 bg-white/10 h-1.5 rounded-full overflow-hidden">
-            <div class="bg-amber w-full h-full rounded-full"></div>
-          </div>
-          <span class="text-xs text-gray-400 font-medium whitespace-nowrap">Langkah 2 dari 2</span>
+          </form>
         </div>
 
-        <h2 class="font-heading text-xl font-bold mb-2">Halo <span id="display-name" class="text-emerald">Kak</span>! 👋</h2>
-        <p class="text-gray-400 text-sm mb-6">Selesaikan pembayaranmu dengan transfer ke rekening di bawah ini.</p>
-
-        <!-- Instruksi Transfer Card -->
-        <div id="rek-card" class="bg-black/50 border border-white/10 rounded-2xl p-5 mb-6 shadow-inner relative overflow-hidden">
-            <!-- Isi Rekening di-inject dari JS -->
-        </div>
-
-        <p id="exact-price-warning" class="text-xs text-red-400 text-center bg-red-500/10 border border-red-500/20 py-2 px-3 rounded-lg font-medium mb-8">
-          ⚠️ Transfer TEPAT <strong>Rp 99.000</strong> (tidak kurang/lebih) agar mudah diverifikasi.
-        </p>
-
-        <!-- Langkah Pembayaran -->
-        <div class="space-y-4 mb-8">
-          <div class="flex gap-4 items-start">
-            <div class="w-8 h-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold text-sm shrink-0">1</div>
-            <div>
-              <p class="font-semibold text-white">Transfer Pembayaran</p>
-              <p class="text-xs text-gray-400 mt-1">Lakukan transfer sebesar Rp 99.000 ke rekening yang tertera di atas via Mobile Banking atau ATM.</p>
-            </div>
+        <!-- STEP 2: DETAIL PEMBAYARAN -->
+        <div id="step-2" class="step-container hidden-step">
+          <div class="mb-10">
+            <h2 class="font-heading text-2xl font-bold mb-2 text-amber">Instruksi Transfer</h2>
+            <p class="text-gray-400 text-sm">Silakan transfer sesuai nominal yang tertera agar otomatis aktif.</p>
           </div>
-          <div class="flex gap-4 items-start">
-            <div class="w-8 h-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold text-sm shrink-0">2</div>
-            <div>
-              <p class="font-semibold text-white">Simpan Bukti Transfer</p>
-              <p class="text-xs text-gray-400 mt-1">Jangan lupa screenshot bukti sukses transfer dari m-banking atau foto struk ATM.</p>
-            </div>
-          </div>
-          <div class="flex gap-4 items-start">
-            <div class="w-8 h-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold text-sm shrink-0">3</div>
-            <div>
-              <p class="font-semibold text-white">Upload Bukti</p>
-              <p class="text-xs text-gray-400 mt-1">Unggah foto bukti transfer di bawah ini lalu klik konfirmasi untuk memproses pesanan.</p>
-            </div>
-          </div>
-        </div>
 
-        <!-- Form Upload -->
-        <form id="upload-form" class="space-y-4 pt-4 border-t border-white/10">
-          <p class="font-heading font-bold text-white mb-2">Upload Bukti Transfer</p>
-          
-          <div id="drop-area" class="border-2 border-dashed border-white/20 hover:border-emerald/50 bg-black/30 rounded-xl min-h-[160px] flex flex-col items-center justify-center p-6 text-center transition cursor-pointer relative">
-            <input type="file" id="file-input" accept="image/jpeg, image/png, image/jpg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+          <!-- Price Highlight -->
+          <div class="bg-black/40 border border-white/5 rounded-3xl p-6 text-center mb-8">
+            <p class="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Jumlah yang Harus Ditransfer</p>
+            <div id="display-price" class="text-3xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">...</div>
+            <p class="text-[10px] text-amber/80 font-medium bg-amber/10 px-3 py-1 rounded-full inline-block">⚠️ WAJIB Sesuai Hingga 3 Angka Terakhir</p>
+          </div>
+
+          <!-- Bank Details -->
+          <div id="rek-card" class="mb-8">
+            <!-- Injected by JS -->
+          </div>
+
+          <!-- Upload Area -->
+          <div class="border-t border-white/10 pt-8">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Unggah Bukti Transfer</label>
             
-            <!-- Default State -->
-            <div id="upload-prompt" class="flex flex-col items-center pointer-events-none">
-              <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-              <p class="text-sm font-medium text-white">Drag & drop foto bukti transfer di sini</p>
-              <p class="text-xs text-gray-500 mt-1">atau klik untuk pilih file (Max 5MB)</p>
-            </div>
+            <div id="drop-area" class="border-2 border-dashed border-white/10 hover:border-emerald/50 bg-black/20 rounded-3xl min-h-[160px] flex flex-col items-center justify-center p-8 transition cursor-pointer relative overflow-hidden">
+              <input type="file" id="file-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+              
+              <div id="upload-prompt" class="text-center pointer-events-none">
+                <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <p class="text-sm font-bold text-white mb-1">Klik atau Geser Foto ke Sini</p>
+                <p class="text-xs text-gray-500">Maksimal ukuran file 5MB</p>
+              </div>
 
-            <!-- Preview State -->
-            <div id="upload-preview" class="hidden flex-col items-center w-full z-20 relative pointer-events-auto">
-              <!-- X button is relative to this container -->
-              <button type="button" id="remove-file" class="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition shadow-lg z-30">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-              </button>
-              <img id="preview-image" src="" alt="Preview" class="max-h-24 rounded-lg shadow-md mb-3 border border-white/10 object-cover">
-              <p id="file-name" class="text-sm font-semibold truncate w-full px-2 text-emerald"></p>
-              <p id="file-size" class="text-xs text-gray-400 mt-0.5"></p>
+              <div id="upload-preview" class="hidden flex-col items-center w-full z-20">
+                <div class="relative group">
+                  <img id="preview-image" src="" class="max-h-32 rounded-2xl mb-3 border border-white/10 shadow-xl object-contain">
+                  <button type="button" id="remove-file" class="absolute -top-3 -right-3 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition shadow-lg opacity-0 group-hover:opacity-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+                <p id="file-name" class="text-xs font-bold text-emerald truncate max-w-xs"></p>
+              </div>
             </div>
           </div>
 
-          <!-- Catatan -->
-          <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-300 mb-1" for="catatan">Catatan (opsional)</label>
-            <textarea id="catatan" rows="2" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald focus:ring-1 focus:ring-emerald transition resize-none" placeholder="Misal: sudah transfer pukul 14.30 via BRI mobile"></textarea>
-          </div>
+          <div class="mt-8 space-y-4">
+            <button type="button" id="btn-confirm" disabled class="w-full bg-gray-700 text-gray-400 font-bold py-5 rounded-2xl transition flex items-center justify-center gap-3 cursor-not-allowed">
+              <span id="btn-confirm-text">Verifikasi Pembayaran</span>
+              <div id="btn-spinner" class="loader-spinner hidden"></div>
+            </button>
+            <p id="verify-message" class="hidden text-emerald text-[10px] text-center font-bold animate-pulse">🤖 Kecerdasan Buatan (AI) Sedang Mendeteksi Bukti Anda...</p>
+            
+            <div class="relative py-4">
+              <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/5"></div></div>
+              <div class="relative flex justify-center text-[10px] uppercase font-bold text-gray-600"><span class="bg-darkgreen px-4">Atau Jika Ada Kendala</span></div>
+            </div>
 
-          <button type="button" id="btn-confirm" disabled class="w-full bg-gray-500 text-gray-300 font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 cursor-not-allowed mt-4">
-            <span id="btn-confirm-text">✅ Konfirmasi Pembayaran</span>
-            <div id="btn-spinner" class="loader-spinner hidden"></div>
-          </button>
-          
-          <button type="button" id="btn-manual-wa" class="w-full bg-[#25D366] hover:bg-green-600 text-white font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(37,211,102,0.3)] mt-4">
-            📱 Atau Konfirmasi Manual via WA
-          </button>
-          
-          <p id="verify-message" class="hidden text-emerald text-sm text-center mt-3 font-semibold animate-pulse">🤖 AI sedang memverifikasi bukti transfer...</p>
-        </form>
-      </div>
-
-      <!-- Halaman 3: SUKSES -->
-      <div id="step-3" class="step-container hidden-step text-center py-8">
-        
-        <svg class="success-checkmark mb-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-          <circle class="check-circle" cx="26" cy="26" r="25" fill="none"/>
-          <path class="check-path" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
-
-        <h2 class="font-heading text-2xl md:text-3xl font-extrabold text-white mb-4">Pembayaran Berhasil! 🎉</h2>
-        
-        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-8">
-          Terima kasih <strong id="success-name" class="text-emerald">...</strong>! Pembayaranmu telah berhasil diverifikasi oleh AI kami. Akun <strong id="success-email" class="text-white">...</strong> milikmu sekarang sudah aktif!
-        </p>
-
-        <div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 mb-6 text-left flex gap-3">
-          <div class="text-2xl">📱</div>
-          <div>
-            <p class="font-semibold text-blue-200 text-sm mb-1">Hubungkan Bot Telegram</p>
-            <p class="text-xs text-blue-300">Setelah masuk ke aplikasi, ikuti panduan untuk menyambungkan asisten Telegram agar kamu bisa langsung mulai mencatat lewat chat.</p>
+            <button type="button" id="btn-manual-wa" class="w-full bg-[#128C7E]/10 hover:bg-[#128C7E]/20 text-[#25D366] text-sm font-bold py-4 rounded-2xl transition flex items-center justify-center gap-2 border border-[#128C7E]/20">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              Konfirmasi Manual CS
+            </button>
           </div>
         </div>
 
-        <div class="mb-4">
-          <a href="/login.html" class="inline-flex justify-center items-center w-full bg-emerald hover:bg-green-500 text-white font-heading font-bold text-base py-4 rounded-full transition shadow-[0_5px_15px_rgba(16,185,129,0.3)] gap-2">
-            Masuk ke Aplikasi
+        <!-- STEP 3: SUKSES -->
+        <div id="step-3" class="step-container hidden-step text-center py-10">
+          <div class="mb-10 relative">
+            <div class="absolute inset-0 animate-ping opacity-20 bg-emerald rounded-full scale-110"></div>
+            <div class="relative w-24 h-24 bg-emerald/20 text-emerald rounded-full flex items-center justify-center mx-auto border-4 border-emerald/30">
+              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+          </div>
+
+          <h2 class="font-heading text-3xl font-extrabold text-white mb-4">Pembayaran Berhasil!</h2>
+          <p class="text-gray-400 text-sm leading-relaxed mb-10">
+            Selamat <strong id="success-name" class="text-white">...</strong>, akun <strong id="success-email" class="text-emerald">...</strong> anda telah diaktifkan secara otomatis. Silakan masuk ke aplikasi untuk mulai mengelola keuangan.
+          </p>
+
+          <a href="/login.html" class="w-full bg-emerald hover:bg-green-500 text-white font-bold py-5 rounded-2xl transition flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
+            Masuk Aplikasi Sekarang
           </a>
+          
+          <div class="mt-10 pt-10 border-t border-white/5">
+            <p class="text-[10px] text-gray-600 uppercase font-bold tracking-widest mb-4">Butuh Bantuan Lebih Lanjut?</p>
+            <p class="text-xs text-gray-500 font-medium">Hubungi kami di 0812-3456-7890</p>
+          </div>
         </div>
 
-        <p class="text-sm text-gray-400 mb-8">
-          Butuh bantuan? Hubungi CS kami via WhatsApp di <br> <strong class="text-white">0812-3456-7890</strong>
-        </p>
       </div>
-
     </div>
+    
+    <p class="text-center text-[10px] text-gray-600 mt-8 font-bold uppercase tracking-[0.2em]">Secure Encryption & AI Verification</p>
   </div>
 
   <script type="module" src="/src/checkout.ts"></script>

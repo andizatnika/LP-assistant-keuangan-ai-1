@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
+import emailjs from '@emailjs/browser';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -157,6 +158,54 @@ btnNext.addEventListener('click', () => {
       setTimeout(() => { this.innerHTML = orig; this.classList.remove('text-emerald'); }, 2000);
     });
   });
+
+// ✅ Kirim email notifikasi ke user
+  const bankMap: Record<string, {label: string, rek: string, an: string}> = {
+    bri:     { label: 'Bank BRI',     rek: '009201001828567', an: 'ANDI ZATNIKA' },
+    mandiri: { label: 'Bank Mandiri', rek: '1820004264586',   an: 'ANDI ZATNIKA' },
+    bca:     { label: 'Bank BCA',     rek: '0383175779',      an: 'HANA SUNDARI PUTRI' }
+  };
+  const b = bankMap[orderData.bank];
+
+  // Kirim email
+  emailjs.send(
+    'service_euvp1wfa',    // ← Service ID dari EmailJS
+    'template_xch1i93',   // ← Template ID dari EmailJS
+    {
+      to_email:     orderData.email,
+      to_name:      orderData.name,
+      bank_name:    b.label,
+      rek_number:   b.rek,
+      rek_an:       b.an,
+      amount:       formattedPriceStr,
+      checkout_url: 'https://jagokeuangan.com/checkout',
+      wa_number:    orderData.wa
+    },
+    'IjIwx_pBHLVTEbyrr'     // ← Public Key dari EmailJS
+  ).catch(err => console.error('Email error:', err));
+
+  // ✅ Kirim reminder ke WA user (auto-buka di tab baru)
+  const waReminderMsg = 
+`Halo ${orderData.name} 👋
+
+Ini reminder pembayaran *Assistant Keuangan AI* kamu:
+
+🏦 Bank: ${b.label}
+💳 No. Rek: ${b.rek}
+👤 A/N: ${b.an}
+💰 Transfer: ${formattedPriceStr}
+
+Setelah transfer, upload bukti di:
+👉 https://jagokeuangan.com/checkout
+
+Butuh bantuan? Balas pesan ini ya!`;
+
+  setTimeout(() => {
+    window.open(
+      `https://wa.me/${orderData.wa.replace(/^0/, '62').replace(/\D/g, '')}?text=${encodeURIComponent(waReminderMsg)}`,
+      '_blank'
+    );
+  }, 1000);
 
   showStep(1);
 });

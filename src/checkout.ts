@@ -216,6 +216,10 @@ btnNext.addEventListener('click', async () => {
         createdAt: serverTimestamp()
       });
     } catch (dbErr) {
+      // Rollback auth user creation if Firestore fails
+      try { await user.delete(); } catch(e) {}
+      await getAuth(app).signOut();
+      
       handleFirestoreError(dbErr, OperationType.WRITE, `users/${user.uid}`);
     }
 

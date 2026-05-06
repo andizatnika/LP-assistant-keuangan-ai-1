@@ -15,7 +15,7 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
 
   // API Route for verifying receipt
-  app.post("/api/verify-receipt", async (req, res) => {
+  app.post("/api/verify-receipt", async (req: express.Request, res: express.Response) => {
     try {
       const { imageBase64, expectedPrice, expectedBank } = req.body;
       
@@ -23,8 +23,13 @@ async function startServer() {
         return res.status(400).json({ error: "Missing image" });
       }
 
-      // Convert base64 string to part object for Gemini
-      // Assuming imageBase64 is data:image/png;base64,.....
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+        return res.status(500).json({ error: "Missing GEMINI_API_KEY in server secrets." });
+      }
+
+      const ai = new GoogleGenAI(apiKey);
+      
       const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
       if (!matches || matches.length !== 3) {
         return res.status(400).json({ error: "Invalid image format" });
@@ -44,36 +49,29 @@ Reply ONLY with a strictly valid JSON object:
   "reason": "Brief explanation of why it is valid or invalid"
 }`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64Data
-                }
-              },
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.1,
-        }
-      });
+      // Use a common model alias for the environment
+      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-      const text = response.text || "{}";
-      const result = JSON.parse(text);
+      const result = await model.generateContent([
+        {
+          inlineData: {
+            mimeType,
+            data: base64Data
+          }
+        },
+        {
+          text: prompt
+        }
+      ]);
+
+      const text = result.response.text();
+      // Try to parse JSON from the response text
+      const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
+      const parsed = JSON.parse(jsonStr);
       
-      res.json(result);
+      res.json(parsed);
     } catch (error) {
-      console.error(error);
+      console.error("AI Verification Error:", error);
       res.status(500).json({ error: "Failed to verify receipt." });
     }
   });

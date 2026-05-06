@@ -279,16 +279,22 @@ elements.btnConfirm.addEventListener('click', async () => {
       })
     });
 
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Gagal menghubungi server verifikasi.");
+    }
+
     const result = await res.json();
+    
     if (result.isValid) {
       await finalizeSignup();
     } else {
       alert(`Verifikasi Gagal: ${result.reason}\n\nPastikan foto jelas dan nominal sesuai Rp ${uniquePrice.toLocaleString('id-ID')}.`);
       resetVerifUI();
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    alert("Terjadi gangguan koneksi. Harap coba beberapa saat lagi atau gunakan konfirmasi manual.");
+    alert(`Terjadi gangguan: ${err.message || "Coba lagi atau gunakan konfirmasi manual."}`);
     resetVerifUI();
   }
 });

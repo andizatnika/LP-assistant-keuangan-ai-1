@@ -188,40 +188,74 @@ togglePass.addEventListener('click', () => {
   }
 });
 
-btnNext.addEventListener('click', async () => {
-  btnNext.disabled = true;
-  btnNext.innerHTML = '<div class="loader-spinner"></div> Memproses...';
+btnNext.addEventListener('click', () => {
+  // Hanya simpan data — JANGAN buat akun Firebase dulu
+  orderData = {
+    name: iNama.value.trim(),
+    email: iEmail.value.trim(),
+    password: iPass.value,
+    wa: iWa.value.trim(),
+    bank: (document.querySelector('input[name="bank"]:checked') as HTMLInputElement).value
+  };
+
+  document.getElementById('display-name')!.textContent = orderData.name;
   
-  try {
-    // 1. Create Firebase Auth user
-    const userCredential = await createUserWithEmailAndPassword(auth, iEmail.value.trim(), iPass.value);
-    const user = userCredential.user;
+  const rekCard = document.getElementById('rek-card') as HTMLElement;
+  
+  if(orderData.bank === 'bri') {
+    rekCard.innerHTML = `
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="font-heading text-lg font-bold text-white mb-2">🏦 Bank BRI</p>
+          <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+          <p class="font-mono text-2xl font-bold tracking-widest text-emerald">009201001828567</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">ANDI ZATNIKA</strong></p>
+      <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">${formattedPriceStr}</strong></p>
+      <button type="button" class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition" data-copy="009201001828567">Salin Nomor Rekening</button>
+    `;
+  } else if (orderData.bank === 'mandiri') {
+    rekCard.innerHTML = `
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="font-heading text-lg font-bold text-white mb-2">🏦 Bank Mandiri</p>
+          <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+          <p class="font-mono text-2xl font-bold tracking-widest text-emerald">1820004264586</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">ANDI ZATNIKA</strong></p>
+      <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">${formattedPriceStr}</strong></p>
+      <button type="button" class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition" data-copy="1820004264586">Salin Nomor Rekening</button>
+    `;
+  } else if (orderData.bank === 'bca') {
+    rekCard.innerHTML = `
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="font-heading text-lg font-bold text-white mb-2">🏦 Bank BCA</p>
+          <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+          <p class="font-mono text-2xl font-bold tracking-widest text-emerald">0383175779</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">HANA SUNDARI PUTRI</strong></p>
+      <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">${formattedPriceStr}</strong></p>
+      <button type="button" class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition" data-copy="0383175779">Salin Nomor Rekening</button>
+    `;
+  }
 
-    orderData = {
-      uid: user.uid,
-      name: iNama.value.trim(),
-      email: iEmail.value.trim(),
-      wa: iWa.value.trim(),
-      bank: (document.querySelector('input[name="bank"]:checked') as HTMLInputElement).value
-    };
+  document.querySelectorAll('.btn-copy').forEach(btn => {
+    btn.addEventListener('click', function(this: HTMLElement) {
+      const num = this.getAttribute('data-copy');
+      navigator.clipboard.writeText(num!);
+      const originalText = this.innerHTML;
+      this.innerHTML = `✓ Tersalin!`;
+      this.classList.add('text-emerald');
+      setTimeout(() => { this.innerHTML = originalText; this.classList.remove('text-emerald'); }, 2000);
+    });
+  });
 
-    // 2. Create unverified Firestore profile
-    try {
-      await setDoc(doc(db, "users", user.uid), {
-        name: orderData.name,
-        email: orderData.email,
-        whatsapp: orderData.wa,
-        role: 'user',
-        isVerified: false, 
-        createdAt: serverTimestamp()
-      });
-    } catch (dbErr) {
-      // Rollback auth user creation if Firestore fails
-      try { await user.delete(); } catch(e) {}
-      await getAuth(app).signOut();
-      
-      handleFirestoreError(dbErr, OperationType.WRITE, `users/${user.uid}`);
-    }
+  showStep(1);
+});
 
     document.getElementById('display-name')!.textContent = orderData.name;
     const rekCard = document.getElementById('rek-card') as HTMLElement;

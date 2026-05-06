@@ -415,30 +415,76 @@ btnConfirm.addEventListener('click', async () => {
       })
     });
     
-    if (!res.ok) throw new Error("Terjadi kesalahan sistem, silakan coba lagi atau hubungi CS.");
+    if (!res.ok) throw new Error("Terjadi kesalahan sistem, silakan coba lagi atau konfirmasi manual via WA.");
     const checkResult = await res.json();
     
     if (!checkResult.isValid) {
-      alert("⚠️ Verifikasi Gagal:\n" + checkResult.reason + "\n\nPastikan bukti transfer jelas, bukan editan, dan nominal sesuai " + formattedPriceStr);
+      alert("⚠️ Verifikasi Gagal:\n" + checkResult.reason + "\n\nPastikan bukti transfer jelas, bukan editan, dan nominal sesuai " + formattedPriceStr + "\nBila dirasa ada kesalahan, silakan Konfirmasi Manual via WA.");
       btnConfirm.disabled = false;
       btnConfirmText.classList.remove('hidden');
       btnSpinner.classList.add('hidden');
       verifyMessage.classList.add('hidden');
-      return; // Stop right here! Don't proceed.
+      return; 
     }
-
-    // Since it's valid, update user doc to verified and set expiresAt 1 year from now
-    const expiresAt = new Date();
-    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
     try {
-      await setDoc(doc(db, "users", orderData.uid), { 
-        isVerified: true,
-        expiresAt: expiresAt
-      }, { merge: true });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `users/${orderData.uid}`);
+      await finalizePayment();
+    } catch(err) {
+      alert("Pembayaran terverifikasi tapi terjadi kesalahan penyimpanan: " + String(err));
+      // still redirect to wa on fail?
     }
+
+  } catch (error: any) {
+      let msg = error.message || String(error);
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed.error) msg = parsed.error;
+      } catch (e) {
+      }
+    alert(msg);
+    btnConfirm.disabled = false;
+    btnConfirmText.classList.remove('hidden');
+    btnSpinner.classList.add('hidden');
+    verifyMessage.classList.add('hidden');
+  }
+});
+
+const btnManualWa = document.getElementById('btn-manual-wa') as HTMLButtonElement;
+btnManualWa.addEventListener('click', () => {
+    // Skip verification, go to WA
+    const docCatatan = (document.getElementById('catatan') as HTMLInputElement);
+    const catatan = docCatatan ? docCatatan.value : '';
+    const waNumber = "6283892802483"; 
+    const tanggalFormat = new Date().toLocaleString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const waMsg = `🔔 *KONFIRMASI MANUAL PEMBAYARAN*
+Saya sudah melakukan pembayaran manual dan ingin konfirmasi akun.
+
+👤 Nama: ${orderData.name}
+📧 Email: ${orderData.email}  
+📱 WhatsApp: ${orderData.wa}
+🏦 Bank Tujuan: ${orderData.bank.toUpperCase()}
+💰 Jumlah Seharusnya: ${formattedPriceStr}
+📝 Catatan Tambahan: ${catatan || '-'}
+🕐 Waktu Akses: ${tanggalFormat}
+
+Tolong segera diaktifkan ya Min. Terima kasih!`;
+
+    const encodedMsg = encodeURIComponent(waMsg);
+    const waUrl = `https://wa.me/${waNumber}?text=${encodedMsg}`;
+    window.open(waUrl, '_blank');
+    
+    // Attempt to create user verification flag as false but send to WA
+    showStep(3);
+});
+
+async function finalizePayment() {
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    
+    await setDoc(doc(db, "users", orderData.uid), { 
+      isVerified: true,
+      expiresAt: expiresAt
+    }, { merge: true });
 
     document.getElementById('success-name')!.textContent = orderData.name;
     document.getElementById('success-email')!.textContent = orderData.email;
@@ -457,39 +503,5 @@ btnConfirm.addEventListener('click', async () => {
       body: JSON.stringify(sheetData)
     }).catch(err => console.error(err));
 
-    // Send WA
-    const waNumber = "6283892802483"; 
-    const tanggalFormat = new Date().toLocaleString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const waMsg = `🔔 *ORDER BARU & TERVERIFIKASI AI*
-👤 Nama: ${orderData.name}
-📧 Email: ${orderData.email}  
-📱 WhatsApp: ${orderData.wa}
-🏦 Bank Transfer: ${orderData.bank.toUpperCase()}
-💰 Jumlah: ${formattedPriceStr}
-🕐 Waktu: ${tanggalFormat}`;
-    const encodedMsg = encodeURIComponent(waMsg);
-    const waUrl = `https://wa.me/${waNumber}?text=${encodedMsg}`;
-    (document.getElementById('btn-wa') as HTMLAnchorElement).href = waUrl;
-    
-    // Facebook Pixel Purchase Event
-    if (typeof (window as any).fbq === 'function') {
-      (window as any).fbq('track', 'Purchase', { currency: 'IDR', value: uniquePrice });
-    }
-    
-    window.open(waUrl, '_blank');
-
-    showStep(2);
-  } catch (error: any) {
-      let msg = error.message || String(error);
-      try {
-        const parsed = JSON.parse(msg);
-        if (parsed.error) msg = parsed.error;
-      } catch (e) {
-      }
-    alert(msg);
-    btnConfirm.disabled = false;
-    btnConfirmText.classList.remove('hidden');
-    btnSpinner.classList.add('hidden');
-    verifyMessage.classList.add('hidden');
-  }
-});
+    showStep(3);
+}

@@ -400,6 +400,12 @@ btnConfirm.addEventListener('click', async () => {
     const encodedMsg = encodeURIComponent(waMsg);
     const waUrl = `https://wa.me/${waNumber}?text=${encodedMsg}`;
     (document.getElementById('btn-wa') as HTMLAnchorElement).href = waUrl;
+    
+    // Facebook Pixel Purchase Event
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'Purchase', { currency: 'IDR', value: uniquePrice });
+    }
+    
     window.open(waUrl, '_blank');
 
     showStep(2);

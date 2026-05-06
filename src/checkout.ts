@@ -11,7 +11,7 @@ const db   = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 
 // ── Konstanta ────────────────────────────────────────────────────
 const EMAILJS_SERVICE_ID  = 'service_euvp1wfa';
-const EMAILJS_TEMPLATE_ID = 'template_xch1i93';
+const EMAILJS_TEMPLATE_ID = 'template_f0vdyjr';
 const EMAILJS_PUBLIC_KEY  = 'IjIwx_pBHLVTEbyrr';
 const WA_ADMIN            = '6283892802483';
 const CHECKOUT_URL        = 'https://jagokeuangan.com/checkout';

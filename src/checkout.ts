@@ -381,7 +381,7 @@ btnConfirm.addEventListener('click', async () => {
       bank: orderData.bank.toUpperCase(),
       timestamp: new Date().toISOString()
     };
-    fetch('https://script.google.com/macros/s/AKfycbxwiWCQbl9uXvT0WNh3Y_aQk8XIEIjSJHUN5ZMORwAi7xtE4OFgF0S8F2a4R7PpQufhnw/exec', {
+    fetch('https://script.google.com/macros/s/AKfycbxD29eqPOOhXWBlsDQ5CXI1rMVYPUBpskr8T0Ak6B7MrXptHuuQpD5VLlR1ov_z4zzhTw/exec', {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sheetData)

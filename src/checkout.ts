@@ -224,100 +224,111 @@ togglePass.addEventListener('click', () => {
 // ── STEP 1: Klik "Lanjut ke Pembayaran" ─────────────────────────
 // Hanya simpan data ke memori. BELUM buat akun Firebase.
 btnNext.addEventListener('click', () => {
-  const form = document.getElementById('checkout-form') as HTMLFormElement;
-  if (form && !form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-  
-  if (!validatePassword(iPass.value)) {
-    alert("Password minimal harus 6 karakter.");
-    iPass.focus();
-    return;
-  }
-  if (iPass.value !== iConfPass.value) {
-    alert("Konfirmasi password tidak sesuai.");
-    iConfPass.focus();
-    return;
-  }
-  if (iWa.value.trim().length < 10) {
-    alert("Mohon masukkan nomor WhatsApp yang benar (minimal 10 angka).");
-    iWa.focus();
-    return;
-  }
+  try {
+    const form = document.getElementById('checkout-form') as HTMLFormElement;
+    if (form && !form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    
+    if (!validatePassword(iPass.value)) {
+      alert("Password minimal harus 6 karakter.");
+      iPass.focus();
+      return;
+    }
+    if (iPass.value !== iConfPass.value) {
+      alert("Konfirmasi password tidak sesuai.");
+      iConfPass.focus();
+      return;
+    }
+    if (iWa.value.trim().length < 10) {
+      alert("Mohon masukkan nomor WhatsApp yang benar (minimal 10 angka).");
+      iWa.focus();
+      return;
+    }
 
-  const bankEl = document.querySelector('input[name="bank"]:checked') as HTMLInputElement;
-  if (!bankEl) {
-    alert("Mohon pilih bank untuk mentransfer.");
-    return;
-  }
-  
-  const bank = bankEl.value;
-  const b    = BANK_MAP[bank];
+    const bankEl = document.querySelector('input[name="bank"]:checked') as HTMLInputElement;
+    if (!bankEl) {
+      alert("Mohon pilih bank untuk mentransfer.");
+      return;
+    }
+    
+    const bank = bankEl.value;
+    const b    = BANK_MAP[bank];
 
-  orderData = {
-    name:     iNama.value.trim(),
-    email:    iEmail.value.trim(),
-    password: iPass.value,
-    wa:       iWa.value.trim(),
-    bank
-  };
-  
-// Simpan ke sessionStorage untuk link email
-  sessionStorage.setItem('keuanganAiOrder', JSON.stringify({
-    name: orderData.name,
-    email: orderData.email,
-    wa: orderData.wa,
-    bank: orderData.bank
-  }));
-  // Tampilkan info rekening di step 2
-  document.getElementById('display-name')!.textContent = orderData.name;
+    orderData = {
+      name:     iNama.value.trim(),
+      email:    iEmail.value.trim(),
+      password: iPass.value,
+      wa:       iWa.value.trim(),
+      bank
+    };
+    
+    try {
+      // Simpan ke sessionStorage untuk link email
+      sessionStorage.setItem('keuanganAiOrder', JSON.stringify({
+        name: orderData.name,
+        email: orderData.email,
+        wa: orderData.wa,
+        bank: orderData.bank
+      }));
+    } catch (e) {
+      console.warn("sessionStorage tidak tersedia:", e);
+    }
 
-  const rekCard = document.getElementById('rek-card') as HTMLElement;
-  rekCard.innerHTML = `
-    <p class="font-heading text-lg font-bold text-white mb-2">🏦 ${b.label}</p>
-    <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
-    <p class="font-mono text-2xl font-bold tracking-widest text-emerald mb-3">${b.rek}</p>
-    <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">${b.an}</strong></p>
-    <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">${formattedPriceStr}</strong></p>
-    <button type="button"
-      class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition"
-      data-copy="${b.rek}">
-      Salin Nomor Rekening
-    </button>`;
+    // Tampilkan info rekening di step 2
+    document.getElementById('display-name')!.textContent = orderData.name;
 
-  rekCard.querySelector('.btn-copy')!.addEventListener('click', function(this: HTMLElement) {
-    navigator.clipboard.writeText(this.getAttribute('data-copy')!);
-    const orig = this.innerHTML;
-    this.innerHTML = '✓ Tersalin!';
-    this.classList.add('text-emerald');
-    setTimeout(() => { this.innerHTML = orig; this.classList.remove('text-emerald'); }, 2000);
-  });
+    const rekCard = document.getElementById('rek-card') as HTMLElement;
+    rekCard.innerHTML = `
+      <p class="font-heading text-lg font-bold text-white mb-2">🏦 ${b.label}</p>
+      <p class="text-sm text-gray-400 mb-0.5">No. Rekening:</p>
+      <p class="font-mono text-2xl font-bold tracking-widest text-emerald mb-3">${b.rek}</p>
+      <p class="text-sm text-gray-300 mb-1">Atas Nama: <strong class="text-white">${b.an}</strong></p>
+      <p class="text-sm text-gray-300 mb-4">Jumlah Transfer: <strong class="text-white">${formattedPriceStr}</strong></p>
+      <button type="button"
+        class="btn-copy text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition"
+        data-copy="${b.rek}">
+        Salin Nomor Rekening
+      </button>`;
 
-  // Kirim email notifikasi ke user
-  emailjs.send(
-    EMAILJS_SERVICE_ID,
-    EMAILJS_TEMPLATE_ID,
-    {
-      to_email:     orderData.email,
-      to_name:      orderData.name,
-      bank_name:    b.label,
-      rek_number:   b.rek,
-      rek_an:       b.an,
-      amount:       formattedPriceStr,
-      checkout_url: CHECKOUT_URL,
-      wa_number:    orderData.wa
-    },
-    EMAILJS_PUBLIC_KEY
-  ).then(() => {
-    console.log('✅ Email terkirim ke', orderData.email);
-  }).catch(err => {
-    console.error('EmailJS error:', err);
-  });
+    rekCard.querySelector('.btn-copy')!.addEventListener('click', function(this: HTMLElement) {
+      navigator.clipboard.writeText(this.getAttribute('data-copy')!);
+      const orig = this.innerHTML;
+      this.innerHTML = '✓ Tersalin!';
+      this.classList.add('text-emerald');
+      setTimeout(() => { this.innerHTML = orig; this.classList.remove('text-emerald'); }, 2000);
+    });
 
-  // Kirim reminder ke WA user
-  const waMsg =
-`Halo ${orderData.name} 👋
+    try {
+      // Kirim email notifikasi ke user
+      emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          to_email:     orderData.email,
+          to_name:      orderData.name,
+          bank_name:    b.label,
+          rek_number:   b.rek,
+          rek_an:       b.an,
+          amount:       formattedPriceStr,
+          checkout_url: CHECKOUT_URL,
+          wa_number:    orderData.wa
+        },
+        EMAILJS_PUBLIC_KEY
+      ).then(() => {
+        console.log('✅ Email terkirim ke', orderData.email);
+      }).catch(err => {
+        console.error('EmailJS error:', err);
+      });
+    } catch (e) {
+      console.error('EmailJS sync error:', e);
+    }
+
+    try {
+      // Kirim reminder ke WA user
+      const waMsg =
+  `Halo ${orderData.name} 👋
 
 Ini instruksi pembayaran *Assistant Keuangan AI* kamu:
 
@@ -334,14 +345,21 @@ Setelah transfer, upload bukti di:
 Butuh bantuan? Balas pesan ini ya!
 Tim Assistant Keuangan AI`;
 
-  setTimeout(() => {
-    window.open(
-      `https://wa.me/${formatWaNumber(orderData.wa)}?text=${encodeURIComponent(waMsg)}`,
-      '_blank'
-    );
-  }, 800);
+      setTimeout(() => {
+        window.open(
+          `https://wa.me/${formatWaNumber(orderData.wa)}?text=${encodeURIComponent(waMsg)}`,
+          '_blank'
+        );
+      }, 800);
+    } catch (e) {
+      console.error("WA error:", e);
+    }
 
-  showStep(1);
+    showStep(1);
+  } catch (err: any) {
+    alert("Terjadi kesalahan sistem: " + err.message);
+    console.error(err);
+  }
 });
 
 // ── File Upload ──────────────────────────────────────────────────

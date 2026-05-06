@@ -14,7 +14,7 @@ const EMAILJS_SERVICE_ID  = 'service_euvp1wfa';
 const EMAILJS_TEMPLATE_ID = 'template_f0vdyjr';
 const EMAILJS_PUBLIC_KEY  = 'IjIwx_pBHLVTEbyrr';
 const WA_ADMIN            = '6283892802483';
-const CHECKOUT_URL = 'https://jagokeuangan.com/checkout?step=2';
+const CHECKOUT_URL = 'https://rumahaistudio.my.id/checkout?step=2';
 
 const BANK_MAP: Record<string, { label: string; rek: string; an: string }> = {
   bri:     { label: 'Bank BRI',     rek: '009201001828567', an: 'ANDI ZATNIKA'       },
@@ -43,6 +43,8 @@ const iPass     = document.getElementById('password')         as HTMLInputElemen
 const iConfPass = document.getElementById('confirm-password') as HTMLInputElement;
 const iWa       = document.getElementById('whatsapp')         as HTMLInputElement;
 const btnNext   = document.getElementById('btn-next')         as HTMLButtonElement;
+btnNext.disabled = false;
+btnNext.className = 'w-full bg-amber hover:bg-yellow-500 text-darkgreen font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(245,158,11,0.2)]';
 
 const togglePass  = document.getElementById('toggle-password') as HTMLButtonElement;
 const eyeIcon     = document.getElementById('eye-icon')        as HTMLElement;

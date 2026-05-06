@@ -20,6 +20,7 @@ export default defineConfig(({mode}) => {
         input: {
           main: path.resolve(__dirname, 'index.html'),
           checkout: path.resolve(__dirname, 'checkout.html'),
+          login: path.resolve(__dirname, 'login.html')
         },
       },
     },

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Assistant Keuangan AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #0B2818; color: white; }
+    h1, h2, h3, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .bg-darkgreen { background-color: #0B2818; }
+    .text-emerald { color: #10B981; }
+    .bg-emerald { background-color: #10B981; }
+    .text-amber { color: #F59E0B; }
+    .bg-amber { background-color: #F59E0B; }
+    .loader-spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <div class="max-w-md w-full bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-lg shadow-2xl">
+    <div class="text-center mb-8">
+      <h1 class="font-heading text-3xl font-bold mb-2">Masuk Akun</h1>
+      <p class="text-gray-400">Assistant Keuangan AI</p>
+    </div>
+
+    <!-- Notification Area -->
+    <div id="notification-area" class="hidden mb-6 p-4 rounded-xl border font-medium text-sm text-center"></div>
+
+    <form id="login-form" class="space-y-5">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+        <input type="email" id="email" required class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald transition placeholder-gray-500" placeholder="nama@email.com">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+        <div class="relative">
+          <input type="password" id="password" required class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald transition placeholder-gray-500" placeholder="••••••••">
+        </div>
+      </div>
+
+      <button type="submit" id="btn-login" class="w-full bg-emerald hover:bg-green-500 text-white font-heading font-bold text-lg py-4 rounded-full transition shadow-[0_5px_15px_rgba(16,185,129,0.3)] mt-6 flex justify-center items-center gap-2">
+        <span id="btn-text">Masuk Sekarang</span>
+        <div id="btn-spinner" class="loader-spinner hidden"></div>
+      </button>
+    </form>
+    
+    <div class="mt-6 text-center">
+      <p class="text-sm text-gray-400">Belum punya akun? <a href="index.html" class="text-emerald hover:text-green-400 font-medium">Daftar sekarang</a></p>
+    </div>
+  </div>
+
+  <script type="module" src="/src/login.ts"></script>
+</body>
+</html>

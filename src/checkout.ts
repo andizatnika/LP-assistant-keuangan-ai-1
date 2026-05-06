@@ -121,16 +121,16 @@ document.getElementById('exact-price-warning')!.innerHTML =
   `⚠️ Transfer TEPAT <strong>${formattedPriceStr}</strong> (tidak kurang/lebih) agar mudah diverifikasi dan otomatis aktif.`;
 
 // ── Helpers ──────────────────────────────────────────────────────
-const showStep = (idx: number) => {
+function showStep(idx: number) {
   steps.forEach((el, i) => {
     el.classList.toggle('hidden-step',  i !== idx);
     el.classList.toggle('visible-step', i === idx);
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+}
 
 const validateEmail    = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-const validatePassword = (v: string) => v.length >= 8 && /[A-Z]/.test(v) && /[0-9]/.test(v);
+const validatePassword = (v: string) => v.length >= 6;
 
 const formatWaNumber = (wa: string) =>
   wa.replace(/\D/g, '').replace(/^0/, '62');
@@ -186,11 +186,6 @@ const checkFormValidity = () => {
   } else {
     matchIcon.classList.add('hidden');
   }
-
-  btnNext.disabled = !valid;
-  btnNext.className = valid
-    ? 'w-full bg-amber hover:bg-yellow-500 text-darkgreen font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 shadow-[0_5px_15px_rgba(245,158,11,0.2)]'
-    : 'w-full bg-gray-500 text-gray-300 font-heading font-bold text-lg py-4 rounded-full transition flex items-center justify-center gap-2 cursor-not-allowed';
 };
 
 [iNama, iEmail, iPass, iConfPass, iWa].forEach(el =>
@@ -227,7 +222,35 @@ togglePass.addEventListener('click', () => {
 // ── STEP 1: Klik "Lanjut ke Pembayaran" ─────────────────────────
 // Hanya simpan data ke memori. BELUM buat akun Firebase.
 btnNext.addEventListener('click', () => {
-  const bank = (document.querySelector('input[name="bank"]:checked') as HTMLInputElement).value;
+  const form = document.getElementById('checkout-form') as HTMLFormElement;
+  if (form && !form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  
+  if (!validatePassword(iPass.value)) {
+    alert("Password minimal harus 6 karakter.");
+    iPass.focus();
+    return;
+  }
+  if (iPass.value !== iConfPass.value) {
+    alert("Konfirmasi password tidak sesuai.");
+    iConfPass.focus();
+    return;
+  }
+  if (iWa.value.trim().length < 10) {
+    alert("Mohon masukkan nomor WhatsApp yang benar (minimal 10 angka).");
+    iWa.focus();
+    return;
+  }
+
+  const bankEl = document.querySelector('input[name="bank"]:checked') as HTMLInputElement;
+  if (!bankEl) {
+    alert("Mohon pilih bank untuk mentransfer.");
+    return;
+  }
+  
+  const bank = bankEl.value;
   const b    = BANK_MAP[bank];
 
   orderData = {

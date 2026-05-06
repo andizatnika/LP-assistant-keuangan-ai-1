@@ -5,7 +5,7 @@ import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 
 const loginForm = document.getElementById('login-form') as HTMLFormElement;
 const iEmail = document.getElementById('email') as HTMLInputElement;

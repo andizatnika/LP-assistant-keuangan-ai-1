@@ -5,7 +5,7 @@ import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 
 // State & DOM
 let orderData: any = {};
@@ -235,7 +235,11 @@ btnNext.addEventListener('click', async () => {
     showStep(1);
     
   } catch(err: any) {
-    alert("Error: " + err.message);
+    if (err.code === 'auth/email-already-in-use') {
+      alert("Email ini sudah terdaftar. Silakan gunakan email lain atau login jika Anda sudah memiliki akun.");
+    } else {
+      alert("Terjadi kesalahan: " + (err.message || String(err)));
+    }
     btnNext.disabled = false;
     btnNext.innerHTML = 'Lanjut ke Pembayaran';
   }

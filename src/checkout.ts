@@ -4,6 +4,11 @@ import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import emailjs from '@emailjs/browser';
 
+/**
+ * CHECKOUT SCRIPT - Refactored for Cloudflare Pages & Anthropic
+ * No frontend API keys. All verification happens via /api/verify-receipt
+ */
+
 // --- CONFIGURATION ---
 const CONFIG = {
   EMAILJS: {
@@ -145,6 +150,9 @@ const handleFile = (file: File) => {
 
 // --- CORE APP ---
 
+/**
+ * Calls our server-side API to verify the receipt using Claude
+ */
 const verifyReceiptAI = async (imageBase64: string, expectedPrice: string, expectedBank: string) => {
   try {
     const response = await fetch(CONFIG.URLS.VERIFY_API, {
@@ -161,7 +169,7 @@ const verifyReceiptAI = async (imageBase64: string, expectedPrice: string, expec
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.reason || "Terjadi kesalahan pada server verifikasi.");
+      throw new Error(errorData.reason || "Terjadi kesalahan pada server verifikasi AI.");
     }
 
     return await response.json();
@@ -257,12 +265,12 @@ const init = () => {
   const dropArea = document.getElementById('drop-area');
   dropArea?.addEventListener('dragover', (e: any) => {
     e.preventDefault();
-    dropArea.classList.add('dragover');
+    if (dropArea) dropArea.classList.add('dragover');
   });
-  dropArea?.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+  dropArea?.addEventListener('dragleave', () => dropArea?.classList.remove('dragover'));
   dropArea?.addEventListener('drop', (e: any) => {
     e.preventDefault();
-    dropArea.classList.remove('dragover');
+    dropArea?.classList.remove('dragover');
     if (e.dataTransfer?.files.length) handleFile(e.dataTransfer.files[0]);
   });
 

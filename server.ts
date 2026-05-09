@@ -87,6 +87,15 @@ Reply ONLY with a strictly valid JSON object:
     // Note: since this app has multiple HTML files, we need special handling if we were to serve them
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
+    
+    // Explicit routes for html files to support clean URLs
+    app.get('/checkout', (req, res) => {
+      res.sendFile(path.join(distPath, 'checkout.html'));
+    });
+    app.get('/login', (req, res) => {
+      res.sendFile(path.join(distPath, 'login.html'));
+    });
+
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

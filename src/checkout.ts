@@ -39,12 +39,12 @@ const uniquePrice = 99000 + Math.floor(Math.random() * 999) + 1;
 const priceStr = 'Rp ' + uniquePrice.toLocaleString('id-ID');
 
 // --- DOM ELEMENTS ---
-const elements = {
-  step1: document.getElementById('step-1') as HTMLElement,
-  step2: document.getElementById('step-2') as HTMLElement,
-  step3: document.getElementById('step-3') as HTMLElement,
-  progressBar: document.getElementById('progress-bar') as HTMLElement,
-  stepCount: document.getElementById('step-count-text') as HTMLElement,
+const getElements = () => ({
+  step1: document.getElementById('step-1'),
+  step2: document.getElementById('step-2'),
+  step3: document.getElementById('step-3'),
+  progressBar: document.getElementById('progress-bar'),
+  stepCount: document.getElementById('step-count-text'),
   
   // Step 1 Form
   form: document.getElementById('checkout-form') as HTMLFormElement,
@@ -76,13 +76,16 @@ const elements = {
   // Step 3
   successName: document.getElementById('success-name') as HTMLElement,
   successEmail: document.getElementById('success-email') as HTMLElement
-};
+});
+
+let elements: any = {};
 
 // --- CORE FUNCTIONS ---
 
 function showStep(idx: number) {
   const steps = [elements.step1, elements.step2, elements.step3];
   steps.forEach((s, i) => {
+    if (!s) return;
     if (i === idx) {
       s.classList.remove('hidden-step');
       s.classList.add('visible-step');
@@ -94,11 +97,11 @@ function showStep(idx: number) {
 
   // Progress update
   if (idx < 2) {
-    elements.progressBar.style.width = idx === 0 ? '50%' : '100%';
-    elements.stepCount.textContent = `Langkah ${idx + 1} dari 2`;
+    if (elements.progressBar) elements.progressBar.style.width = idx === 0 ? '50%' : '100%';
+    if (elements.stepCount) elements.stepCount.textContent = `Langkah ${idx + 1} dari 2`;
   } else {
-    elements.progressBar.parentElement?.classList.add('hidden');
-    elements.stepCount.parentElement?.classList.add('hidden');
+    elements.progressBar?.parentElement?.classList.add('hidden');
+    elements.stepCount?.parentElement?.classList.add('hidden');
   }
   
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -147,172 +150,18 @@ const renderBankInfo = () => {
   });
 };
 
-// --- EVENT HANDLERS ---
-
-// Toggle Password
-elements.togglePass.addEventListener('click', () => {
-  const isPass = elements.iPass.type === 'password';
-  elements.iPass.type = isPass ? 'text' : 'password';
-  elements.eyeIcon.innerHTML = isPass 
-    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
-    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
-});
-
-// Step 1: Next
-elements.btnNext.addEventListener('click', () => {
-  const name = elements.iNama.value.trim();
-  const email = elements.iEmail.value.trim();
-  const pass = elements.iPass.value;
-  const confPass = elements.iConfPass.value;
-  const wa = elements.iWa.value.trim();
-  const bankRadio = document.querySelector('input[name="bank"]:checked') as HTMLInputElement;
-
-  // Simple validation
-  if (!name || !email || !pass || !wa || !bankRadio) {
-    alert("Harap lengkapi semua data pendaftaran.");
-    return;
-  }
-  if (pass !== confPass) {
-    alert("Konfirmasi password tidak sesuai.");
-    return;
-  }
-  if (pass.length < 8) {
-    alert("Password minimal harus 8 karakter demi keamanan.");
-    return;
-  }
-
-  orderData = { name, email, pass, wa, bank: bankRadio.value };
-  sessionStorage.setItem('order_cache', JSON.stringify(orderData));
-  
-  // Transition
-  renderBankInfo();
-  
-  // Send Email (Async)
-  try {
-    emailjs.send(
-      CONFIG.EMAILJS.SERVICE_ID,
-      CONFIG.EMAILJS.TEMPLATE_ID,
-      {
-        to_name: name,
-        to_email: email,
-        amount: priceStr,
-        bank_name: BANK_ACCOUNTS[orderData.bank].name,
-        rek_num: BANK_ACCOUNTS[orderData.bank].rek,
-        rek_an: BANK_ACCOUNTS[orderData.bank].an,
-        checkout_url: CONFIG.URLS.CHECKOUT
-      },
-      CONFIG.EMAILJS.PUBLIC_KEY
-    );
-  } catch (err) {
-    console.error("EmailJS Error:", err);
-  }
-
-  showStep(1);
-});
-
-// File Management
-const handleFile = (file: File) => {
-  if (!file.type.startsWith('image/')) {
-    alert("Hanya file gambar (JPG, PNG, WEBP) yang diperbolehkan.");
-    return;
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    alert("Ukuran file terlalu besar (Maks 5MB).");
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    uploadedImageBase64 = e.target?.result as string;
-    elements.previewImage.src = uploadedImageBase64;
-    elements.fileName.textContent = file.name;
-    elements.uploadPrompt.classList.add('hidden');
-    elements.uploadPreview.classList.remove('hidden');
-    elements.btnConfirm.disabled = false;
-    elements.btnConfirm.classList.remove('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
-    elements.btnConfirm.classList.add('bg-emerald', 'text-white', 'hover:bg-green-500');
-  };
-  reader.readAsDataURL(file);
-};
-
-elements.fileInput.addEventListener('change', (e: any) => {
-  if (e.target.files.length) handleFile(e.target.files[0]);
-});
-
-elements.dropArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  elements.dropArea.classList.add('dragover');
-});
-elements.dropArea.addEventListener('dragleave', () => elements.dropArea.classList.remove('dragover'));
-elements.dropArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  elements.dropArea.classList.remove('dragover');
-  if (e.dataTransfer?.files.length) handleFile(e.dataTransfer.files[0]);
-});
-
-elements.removeFile.addEventListener('click', (e) => {
-  e.stopPropagation();
-  uploadedImageBase64 = null;
-  elements.fileInput.value = '';
-  elements.uploadPrompt.classList.remove('hidden');
-  elements.uploadPreview.classList.add('hidden');
-  elements.btnConfirm.disabled = true;
-  elements.btnConfirm.classList.add('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
-  elements.btnConfirm.classList.remove('bg-emerald', 'text-white', 'hover:bg-green-500');
-});
-
-// Confirm Payment (AI Verification)
-elements.btnConfirm.addEventListener('click', async () => {
-  elements.btnConfirm.disabled = true;
-  elements.btnConfirmText.classList.add('hidden');
-  elements.btnSpinner.classList.remove('hidden');
-  elements.verifyMsg.classList.remove('hidden');
-
-  try {
-    const res = await fetch('/api/verify-receipt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageBase64: uploadedImageBase64,
-        expectedPrice: uniquePrice.toLocaleString('id-ID'),
-        expectedBank: BANK_ACCOUNTS[orderData.bank].name
-      })
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Gagal menghubungi server verifikasi.");
-    }
-
-    const result = await res.json();
-    
-    if (result.isValid) {
-      await finalizeSignup();
-    } else {
-      alert(`Verifikasi Gagal: ${result.reason}\n\nPastikan foto jelas dan nominal sesuai Rp ${uniquePrice.toLocaleString('id-ID')}.`);
-      resetVerifUI();
-    }
-  } catch (err: any) {
-    console.error(err);
-    alert(`Terjadi gangguan: ${err.message || "Coba lagi atau gunakan konfirmasi manual."}`);
-    resetVerifUI();
-  }
-});
-
 const resetVerifUI = () => {
-  elements.btnConfirm.disabled = false;
-  elements.btnConfirmText.classList.remove('hidden');
-  elements.btnSpinner.classList.add('hidden');
-  elements.verifyMsg.classList.add('hidden');
+  if (elements.btnConfirm) elements.btnConfirm.disabled = false;
+  if (elements.btnConfirmText) elements.btnConfirmText.classList.remove('hidden');
+  if (elements.btnSpinner) elements.btnSpinner.classList.add('hidden');
+  if (elements.verifyMsg) elements.verifyMsg.classList.add('hidden');
 };
 
 // Finalize Signup (Firebase)
 async function finalizeSignup() {
   try {
-    // 1. Create Auth
     const { user } = await createUserWithEmailAndPassword(auth, orderData.email, orderData.pass);
     
-    // 2. Set Firestore Profile
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
@@ -326,7 +175,6 @@ async function finalizeSignup() {
       createdAt: serverTimestamp()
     });
 
-    // 3. Log to Sheets (Async)
     fetch(CONFIG.URLS.GSHEETS, {
       method: 'POST',
       mode: 'no-cors',
@@ -340,9 +188,8 @@ async function finalizeSignup() {
       })
     }).catch(e => console.error("Sheets log failed", e));
 
-    // 4. Success UI
-    elements.successName.textContent = orderData.name;
-    elements.successEmail.textContent = orderData.email;
+    if (elements.successName) elements.successName.textContent = orderData.name;
+    if (elements.successEmail) elements.successEmail.textContent = orderData.email;
     showStep(2);
 
   } catch (err: any) {
@@ -352,11 +199,183 @@ async function finalizeSignup() {
   }
 }
 
-// Manual WA
-elements.btnManual.addEventListener('click', () => {
-  const msg = encodeURIComponent(`Halo Admin, Saya ingin konfirmasi pembayaran *Assistant Keuangan AI*.\n\n👤 Nama: ${orderData.name}\n📧 Email: ${orderData.email}\n💰 Nominal: ${priceStr}\n🏦 Bank: ${orderData.bank.toUpperCase()}\n\nMohon bantuannya untuk aktifkan akun saya.`);
-  window.open(`https://wa.me/${CONFIG.ADMIN.WA}?text=${msg}`, '_blank');
-});
+// --- EVENT HANDLERS ---
+
+const initEvents = () => {
+  // Toggle Password
+  elements.togglePass?.addEventListener('click', () => {
+    const isPass = elements.iPass.type === 'password';
+    elements.iPass.type = isPass ? 'text' : 'password';
+    if (elements.eyeIcon) {
+      elements.eyeIcon.innerHTML = isPass 
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+    }
+  });
+
+  // Step 1: Next
+  elements.btnNext?.addEventListener('click', () => {
+    const name = elements.iNama.value.trim();
+    const email = elements.iEmail.value.trim();
+    const pass = elements.iPass.value;
+    const confPass = elements.iConfPass.value;
+    const wa = elements.iWa.value.trim();
+    const bankRadio = document.querySelector('input[name="bank"]:checked') as HTMLInputElement;
+
+    if (!name || !email || !pass || !wa || !bankRadio) {
+      alert("Harap lengkapi semua data pendaftaran.");
+      return;
+    }
+    if (pass !== confPass) {
+      alert("Konfirmasi password tidak sesuai.");
+      return;
+    }
+    if (pass.length < 8) {
+      alert("Password minimal harus 8 karakter demi keamanan.");
+      return;
+    }
+
+    orderData = { name, email, pass, wa, bank: bankRadio.value };
+    sessionStorage.setItem('order_cache', JSON.stringify(orderData));
+    
+    renderBankInfo();
+    
+    try {
+      emailjs.send(
+        CONFIG.EMAILJS.SERVICE_ID,
+        CONFIG.EMAILJS.TEMPLATE_ID,
+        {
+          to_name: name,
+          to_email: email,
+          amount: priceStr,
+          bank_name: BANK_ACCOUNTS[orderData.bank].name,
+          rek_num: BANK_ACCOUNTS[orderData.bank].rek,
+          rek_an: BANK_ACCOUNTS[orderData.bank].an,
+          checkout_url: CONFIG.URLS.CHECKOUT
+        },
+        CONFIG.EMAILJS.PUBLIC_KEY
+      );
+    } catch (err) {
+      console.error("EmailJS Error:", err);
+    }
+
+    showStep(1);
+  });
+
+  // File Events
+  elements.fileInput?.addEventListener('change', (e: any) => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  elements.dropArea?.addEventListener('dragover', (e: any) => {
+    e.preventDefault();
+    if (elements.dropArea) elements.dropArea.classList.add('dragover');
+  });
+  elements.dropArea?.addEventListener('dragleave', () => elements.dropArea?.classList.remove('dragover'));
+  elements.dropArea?.addEventListener('drop', (e: any) => {
+    e.preventDefault();
+    elements.dropArea?.classList.remove('dragover');
+    if (e.dataTransfer?.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  elements.removeFile?.addEventListener('click', (e: any) => {
+    e.stopPropagation();
+    uploadedImageBase64 = null;
+    elements.fileInput.value = '';
+    elements.uploadPrompt?.classList.remove('hidden');
+    elements.uploadPreview?.classList.add('hidden');
+    if (elements.btnConfirm) {
+      elements.btnConfirm.disabled = true;
+      elements.btnConfirm.classList.add('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
+      elements.btnConfirm.classList.remove('bg-emerald', 'text-white', 'hover:bg-green-500');
+    }
+  });
+
+  // Confirm Payment
+  elements.btnConfirm?.addEventListener('click', async () => {
+    elements.btnConfirm.disabled = true;
+    if (elements.btnConfirmText) elements.btnConfirmText.classList.add('hidden');
+    if (elements.btnSpinner) elements.btnSpinner.classList.remove('hidden');
+    if (elements.verifyMsg) elements.verifyMsg.classList.remove('hidden');
+
+    try {
+      const res = await fetch('/api/verify-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: uploadedImageBase64,
+          expectedPrice: uniquePrice.toLocaleString('id-ID'),
+          expectedBank: BANK_ACCOUNTS[orderData.bank].name
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Gagal menghubungi server verifikasi.");
+      }
+
+      const result = await res.json();
+      
+      if (result.isValid) {
+        await finalizeSignup();
+      } else {
+        alert(`Verifikasi Gagal: ${result.reason}\n\nPastikan foto jelas dan nominal sesuai Rp ${uniquePrice.toLocaleString('id-ID')}.`);
+        resetVerifUI();
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Terjadi gangguan: ${err.message || "Coba lagi atau gunakan konfirmasi manual."}`);
+      resetVerifUI();
+    }
+  });
+
+  // Manual WA
+  elements.btnManual?.addEventListener('click', () => {
+    const msg = encodeURIComponent(`Halo Admin, Saya ingin konfirmasi pembayaran *Assistant Keuangan AI*.\n\n👤 Nama: ${orderData.name}\n📧 Email: ${orderData.email}\n💰 Nominal: ${priceStr}\n🏦 Bank: ${orderData.bank.toUpperCase()}\n\nMohon bantuannya untuk aktifkan akun saya.`);
+    window.open(`https://wa.me/${CONFIG.ADMIN.WA}?text=${msg}`, '_blank');
+  });
+
+  checkAuth();
+};
+
+const handleFile = (file: File) => {
+  if (!file.type.startsWith('image/')) {
+    alert("Hanya file gambar (JPG, PNG, WEBP) yang diperbolehkan.");
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Ukuran file terlalu besar (Maks 5MB).");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    uploadedImageBase64 = e.target?.result as string;
+    if (elements.previewImage) elements.previewImage.src = uploadedImageBase64;
+    if (elements.fileName) elements.fileName.textContent = file.name;
+    if (elements.uploadPrompt) elements.uploadPrompt.classList.add('hidden');
+    if (elements.uploadPreview) elements.uploadPreview.classList.remove('hidden');
+    if (elements.btnConfirm) {
+      elements.btnConfirm.disabled = false;
+      elements.btnConfirm.classList.remove('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
+      elements.btnConfirm.classList.add('bg-emerald', 'text-white', 'hover:bg-green-500');
+    }
+  };
+  reader.readAsDataURL(file);
+};
 
 // --- INIT ---
-checkAuth();
+const startApp = () => {
+  elements = getElements();
+  if (!elements.btnNext) {
+    setTimeout(startApp, 100);
+    return;
+  }
+  initEvents();
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}

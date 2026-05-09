@@ -2,13 +2,88 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
+import Anthropic from "@anthropic-ai/sdk";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY || "",
+  });
+
   // Increase payload limit for base64 images
   app.use(express.json({ limit: '10mb' }));
+
+  // API Verification Endpoint (Anthropic)
+  app.post('/api/verify-receipt', async (req, res) => {
+    try {
+      const { imageBase64, expectedPrice, expectedBank } = req.body;
+
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.status(500).json({ 
+          isValid: false, 
+          reason: "ANTHROPIC_API_KEY is not configured in environment." 
+        });
+      }
+
+      if (!imageBase64) {
+        return res.status(400).json({ isValid: false, reason: "No image data provided." });
+      }
+
+      const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (!matches) {
+        return res.status(400).json({ isValid: false, reason: "Invalid image format." });
+      }
+      const mediaType = matches[1];
+      const base64Data = matches[2];
+
+      const prompt = `Analisis bukti transfer ini. 
+      Verifikasi apakah:
+      1. Ini adalah bukti transfer bank yang valid.
+      2. Nominal transfer adalah "${expectedPrice}" (angka utama harus cocok).
+      3. Bank tujuan adalah "${expectedBank}".
+      
+      Berikan jawaban dalam format JSON:
+      {
+        "isValid": boolean,
+        "reason": "Penjelasan singkat dalam Bahasa Indonesia jika tidak valid"
+      }`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: mediaType as any,
+                  data: base64Data,
+                },
+              },
+              {
+                type: "text",
+                text: prompt,
+              },
+            ],
+          },
+        ],
+      });
+
+      const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const result = jsonMatch ? JSON.parse(jsonMatch[0]) : { isValid: false, reason: "AI response format error." };
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Anthropic Error:", error);
+      res.status(500).json({ isValid: false, reason: "AI Verification Error: " + error.message });
+    }
+  });
 
   const distPath = path.join(process.cwd(), 'dist');
 
@@ -23,15 +98,7 @@ async function startServer() {
       ? path.join(process.cwd(), 'checkout1', 'index.html')
       : path.join(distPath, 'checkout1/index.html');
     
-    try {
-      let content = fs.readFileSync(filePath, 'utf8');
-      // Inject Gemini API Key
-      const apiKey = process.env.GEMINI_API_KEY || '';
-      content = content.replace('window.GEMINI_API_KEY = "";', `window.GEMINI_API_KEY = "${apiKey}";`);
-      res.send(content);
-    } catch (e) {
-      res.status(500).send("Error loading checkout page");
-    }
+    res.sendFile(filePath);
   });
 
   // Vite middleware for development

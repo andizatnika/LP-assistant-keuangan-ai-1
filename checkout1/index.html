@@ -303,21 +303,7 @@
 
   </main>
 
-  <script>
-    window.GEMINI_API_KEY = "";
-  </script>
-
-  <script type="importmap">
-    {
-      "imports": {
-        "@google/genai": "https://esm.run/@google/genai"
-      }
-    }
-  </script>
-
   <script type="module">
-    import { GoogleGenAI } from "@google/genai";
-
     // --- CONFIGURATION ---
     const CONFIG = {
       FIREBASE: {
@@ -349,8 +335,6 @@
     const auth = firebase.auth();
     const db = firebase.app().firestore(CONFIG.FIREBASE.databaseId);
     emailjs.init(CONFIG.EMAILJS.PUBLIC_KEY);
-
-    const ai = new GoogleGenAI({ apiKey: window.GEMINI_API_KEY });
 
     // --- GLOBAL STATE ---
     let orderData = {
@@ -459,42 +443,30 @@
     }
 
     async function verifyReceiptWithAI(base64Image) {
-      console.log("Starting AI Verification...");
+      console.log("Starting AI Verification (Anthropic via Server)...");
       try {
-        const base64Content = base64Image.split(',')[1];
-        const prompt = `
-          Analisis bukti transfer ini. 
-          Verifikasi apakah:
-          1. Ini adalah bukti transfer bank yang valid.
-          2. Nominal transfer adalah "${uniquePrice.toLocaleString('id-ID')}" (angka utama harus cocok).
-          3. Bank tujuan adalah "${BANK_ACCOUNTS[orderData.bank].name}".
-          
-          Berikan jawaban dalam format JSON:
-          {
-            "isValid": boolean,
-            "reason": "Penjelasan singkat jika tidak valid"
-          }
-        `;
-
-        const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: {
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType: "image/jpeg", data: base64Content } }
-            ]
+        const response = await fetch('/api/verify-receipt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          config: {
-            responseMimeType: "application/json"
-          }
+          body: JSON.stringify({
+            imageBase64: base64Image,
+            expectedPrice: uniquePrice.toLocaleString('id-ID'),
+            expectedBank: BANK_ACCOUNTS[orderData.bank].name
+          })
         });
 
-        const result = JSON.parse(response.text);
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        const result = await response.json();
         console.log("AI Verification Result:", result);
         return result;
       } catch (err) {
         console.error("AI Verify Error:", err);
-        return { isValid: false, reason: "Gagal menghubungi AI: " + err.message };
+        return { isValid: false, reason: "Gagal menghubungi Server Verifikasi: " + err.message };
       }
     }
 

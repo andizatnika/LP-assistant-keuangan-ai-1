@@ -1,6 +1,6 @@
 {
   "name": "LP assistant keuangan ai 1",
-  "description": "",
+  "description": "AI Assistant for financial management with automated payment verification.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

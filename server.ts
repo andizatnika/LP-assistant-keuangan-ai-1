@@ -22,7 +22,16 @@ async function startServer() {
     const filePath = process.env.NODE_ENV !== "production"
       ? path.join(process.cwd(), 'checkout1', 'index.html')
       : path.join(distPath, 'checkout1/index.html');
-    res.sendFile(filePath);
+    
+    try {
+      let content = fs.readFileSync(filePath, 'utf8');
+      // Inject Gemini API Key
+      const apiKey = process.env.GEMINI_API_KEY || '';
+      content = content.replace('window.GEMINI_API_KEY = "";', `window.GEMINI_API_KEY = "${apiKey}";`);
+      res.send(content);
+    } catch (e) {
+      res.status(500).send("Error loading checkout page");
+    }
   });
 
   // Vite middleware for development

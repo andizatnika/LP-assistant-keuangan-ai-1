@@ -304,6 +304,20 @@
   </main>
 
   <script>
+    window.GEMINI_API_KEY = "";
+  </script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.run/@google/genai"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { GoogleGenAI } from "@google/genai";
+
     // --- CONFIGURATION ---
     const CONFIG = {
       FIREBASE: {
@@ -321,7 +335,6 @@
         PUBLIC_KEY: 'IjIwx_pBHLVTEbyrr'
       },
       SHEETS_URL: 'https://script.google.com/macros/s/AKfycbxD29eqPOOhXWBlsDQ5CXI1rMVYPUBpskr8T0Ak6B7MrXptHuuQpD5VLlR1ov_z4zzhTw/exec',
-      VERIFY_API: '/api/verify-receipt',
       WA_ADMIN: '6283892802483'
     };
 
@@ -336,6 +349,8 @@
     const auth = firebase.auth();
     const db = firebase.app().firestore(CONFIG.FIREBASE.databaseId);
     emailjs.init(CONFIG.EMAILJS.PUBLIC_KEY);
+
+    const ai = new GoogleGenAI({ apiKey: window.GEMINI_API_KEY });
 
     // --- GLOBAL STATE ---
     let orderData = {
@@ -428,8 +443,9 @@
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        uploadedImageBase64 = e.target.result;
-        document.getElementById('preview-image').src = uploadedImageBase64;
+        const base64Data = e.target.result;
+        uploadedImageBase64 = base64Data;
+        document.getElementById('preview-image').src = base64Data;
         document.getElementById('file-name').textContent = file.name;
         document.getElementById('upload-prompt').classList.add('hidden');
         document.getElementById('upload-preview').classList.remove('hidden');
@@ -440,6 +456,46 @@
         btnConfirm.classList.add('bg-emerald', 'text-darkgreen', 'hover:bg-emerald/90', 'shadow-emerald/20');
       };
       reader.readAsDataURL(file);
+    }
+
+    async function verifyReceiptWithAI(base64Image) {
+      console.log("Starting AI Verification...");
+      try {
+        const base64Content = base64Image.split(',')[1];
+        const prompt = `
+          Analisis bukti transfer ini. 
+          Verifikasi apakah:
+          1. Ini adalah bukti transfer bank yang valid.
+          2. Nominal transfer adalah "${uniquePrice.toLocaleString('id-ID')}" (angka utama harus cocok).
+          3. Bank tujuan adalah "${BANK_ACCOUNTS[orderData.bank].name}".
+          
+          Berikan jawaban dalam format JSON:
+          {
+            "isValid": boolean,
+            "reason": "Penjelasan singkat jika tidak valid"
+          }
+        `;
+
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: {
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType: "image/jpeg", data: base64Content } }
+            ]
+          },
+          config: {
+            responseMimeType: "application/json"
+          }
+        });
+
+        const result = JSON.parse(response.text);
+        console.log("AI Verification Result:", result);
+        return result;
+      } catch (err) {
+        console.error("AI Verify Error:", err);
+        return { isValid: false, reason: "Gagal menghubungi AI: " + err.message };
+      }
     }
 
     // --- INITIALIZATION ---
@@ -555,40 +611,46 @@
         document.getElementById('verify-message').classList.remove('hidden');
 
         try {
-          const response = await fetch(CONFIG.VERIFY_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              imageBase64: uploadedImageBase64,
-              expectedPrice: uniquePrice.toLocaleString('id-ID'),
-              expectedBank: BANK_ACCOUNTS[orderData.bank].name
-            })
-          });
-
-          const result = await response.json();
+          const result = await verifyReceiptWithAI(uploadedImageBase64);
 
           if (result.isValid) {
-            // Success! Create Account
-            const authResult = await auth.createUserWithEmailAndPassword(orderData.email, orderData.pass);
-            const user = authResult.user;
+            console.log("AI Verification Success, proceeding with account creation...");
+            let user;
+            try {
+              const authResult = await auth.createUserWithEmailAndPassword(orderData.email, orderData.pass);
+              user = authResult.user;
+              console.log("Account created:", user.uid);
+            } catch (authErr) {
+              if (authErr.code === 'auth/email-already-in-use') {
+                console.log("Email already in use, trying to sign in...");
+                const signInResult = await auth.signInWithEmailAndPassword(orderData.email, orderData.pass);
+                user = signInResult.user;
+                console.log("Signed in successfully:", user.uid);
+              } else {
+                throw authErr;
+              }
+            }
             
             const expiresAt = new Date();
             expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
+            console.log("Saving to Firestore...");
             await db.collection('users').doc(user.uid).set({
               name: orderData.name,
               email: orderData.email,
               whatsapp: orderData.wa,
               role: 'user',
               isVerified: true,
-              expiresAt: expiresAt,
+              expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            console.log("Firestore write successful!");
 
-            // GSheets Log
+            // GSheets Log (Optional, but let's keep it)
             fetch(CONFIG.SHEETS_URL, {
               method: 'POST',
               mode: 'no-cors',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 name: orderData.name,
                 email: orderData.email,
@@ -672,11 +734,7 @@
         document.getElementById('whatsapp').value = orderData.wa;
         const rb = document.querySelector(`input[name="bank"][value="${orderData.bank}"]`);
         if (rb) rb.checked = true;
-        
-        // If they were already at Step 2 and refreshed, stay there
-        // Actually, let's keep them at Step 1 unless they filled it
       }
-    });
     });
   </script>
 </body>

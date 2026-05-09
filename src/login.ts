@@ -75,7 +75,7 @@ loginForm.addEventListener('submit', async (e) => {
         showNotification(
           `⛔ <strong>Masa Keanggotaan Habis</strong><br><br>
            Masa aktif akun AI Assistant Anda selama 1 tahun telah berakhir pada ${expiresAtDate.toLocaleDateString('id-ID')}.<br><br>
-           <a href="/checkout.html" class="underline font-bold mt-2 inline-block">Klik di sini untuk Memperpanjang</a>`, 
+           <a href="/checkout1" class="underline font-bold mt-2 inline-block">Klik di sini untuk Memperpanjang</a>`, 
           "error"
         );
         return;

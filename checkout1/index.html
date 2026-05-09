@@ -346,8 +346,8 @@
       bank: 'bri'
     };
     let uploadedImageBase64 = null;
-    const uniquePrice = 99000 + Math.floor(Math.random() * 999) + 1;
-    const priceStr = 'Rp ' + uniquePrice.toLocaleString('id-ID');
+    let uniquePrice = 99000 + Math.floor(Math.random() * 999) + 1;
+    let priceStr = 'Rp ' + uniquePrice.toLocaleString('id-ID');
 
     // --- HELPERS ---
     function showStep(idx) {
@@ -481,6 +481,18 @@
         
         renderBankInfo();
         
+        // Generate direct link for Email
+        const params = new URLSearchParams({
+          step: '2',
+          n: btoa(name),
+          e: btoa(email),
+          p: btoa(pass),
+          w: btoa(wa),
+          b: bank,
+          amt: uniquePrice
+        });
+        const directLink = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+
         // Push Email (Fire & Forget)
         emailjs.send(CONFIG.EMAILJS.SERVICE_ID, CONFIG.EMAILJS.TEMPLATE_ID, {
           to_name: name,
@@ -489,7 +501,7 @@
           bank_name: BANK_ACCOUNTS[bank].name,
           rek_num: BANK_ACCOUNTS[bank].rek,
           rek_an: BANK_ACCOUNTS[bank].an,
-          checkout_url: window.location.href
+          checkout_url: directLink
         }).catch(err => console.error("EmailJS Error", err));
 
         showStep(1);
@@ -617,7 +629,41 @@
         window.open(`https://wa.me/${CONFIG.WA_ADMIN}?text=${msg}`, '_blank');
       };
 
-      // Restore from cache if exists
+      // --- HANDLE INCOMING LINK DATA ---
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDirectStep2 = urlParams.get('step') === '2';
+
+      if (isDirectStep2) {
+        try {
+          const name = atob(urlParams.get('n'));
+          const email = atob(urlParams.get('e'));
+          const pass = atob(urlParams.get('p'));
+          const wa = atob(urlParams.get('w'));
+          const bank = urlParams.get('b');
+          const amt = parseInt(urlParams.get('amt'));
+
+          if (name && email && pass && wa && bank) {
+            orderData = { name, email, pass, wa, bank };
+            uniquePrice = amt;
+            priceStr = 'Rp ' + uniquePrice.toLocaleString('id-ID');
+            
+            // Fill inputs regardless
+            document.getElementById('nama').value = name;
+            document.getElementById('email').value = email;
+            document.getElementById('whatsapp').value = wa;
+            const rb = document.querySelector(`input[name="bank"][value="${bank}"]`);
+            if (rb) rb.checked = true;
+
+            renderBankInfo();
+            showStep(1);
+            return; // Skip reading from session if URL is valid
+          }
+        } catch (e) {
+          console.error("URL Restore Error", e);
+        }
+      }
+
+      // Restore from session cache if exists (for refresh)
       const saved = sessionStorage.getItem('temp_order_data');
       if (saved) {
         orderData = JSON.parse(saved);
@@ -626,7 +672,11 @@
         document.getElementById('whatsapp').value = orderData.wa;
         const rb = document.querySelector(`input[name="bank"][value="${orderData.bank}"]`);
         if (rb) rb.checked = true;
+        
+        // If they were already at Step 2 and refreshed, stay there
+        // Actually, let's keep them at Step 1 unless they filled it
       }
+    });
     });
   </script>
 </body>

@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { GoogleGenAI } from "@google/genai";
 import firebaseConfig from '../firebase-applet-config.json';
 import emailjs from '@emailjs/browser';
 
@@ -17,7 +16,8 @@ const CONFIG = {
   },
   URLS: {
     CHECKOUT: 'https://jagokeuangan.com/checkout?step=2',
-    GSHEETS: 'https://script.google.com/macros/s/AKfycbxD29eqPOOhXWBlsDQ5CXI1rMVYPUBpskr8T0Ak6B7MrXptHuuQpD5VLlR1ov_z4zzhTw/exec'
+    GSHEETS: 'https://script.google.com/macros/s/AKfycbxD29eqPOOhXWBlsDQ5CXI1rMVYPUBpskr8T0Ak6B7MrXptHuuQpD5VLlR1ov_z4zzhTw/exec',
+    VERIFY_API: '/api/verify-receipt'
   }
 };
 
@@ -147,44 +147,26 @@ const handleFile = (file: File) => {
 
 const verifyReceiptAI = async (imageBase64: string, expectedPrice: string, expectedBank: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: (process as any).env.GEMINI_API_KEY });
-    
-    // Extract base64 and mime
-    const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    if (!matches || matches.length !== 3) {
-      throw new Error("Format gambar tidak valid");
-    }
-    const mimeType = matches[1];
-    const data = matches[2];
-
-    const prompt = `You are a financial verification assistant. Look at this uploaded transfer receipt.
-Please check:
-1. Is this a seemingly valid and genuine bank transfer receipt (not an obvious fake, completely unrelated image, or badly edited)?
-2. Does the transfer amount match EXACTLY Rp ${expectedPrice}?
-3. Does the destination bank match ${expectedBank}?
-Reply ONLY with a strictly valid JSON object:
-{
-  "isValid": true|false,
-  "reason": "Brief explanation of why it is valid or invalid"
-}`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash", 
-      contents: [
-        {
-          parts: [
-            { inlineData: { mimeType, data } },
-            { text: prompt }
-          ]
-        }
-      ]
+    const response = await fetch(CONFIG.URLS.VERIFY_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        imageBase64,
+        expectedPrice,
+        expectedBank
+      })
     });
 
-    const text = response.text || "";
-    const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
-    return JSON.parse(jsonStr);
-  } catch (err) {
-    console.error("AI Verification Error:", err);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.reason || "Terjadi kesalahan pada server verifikasi.");
+    }
+
+    return await response.json();
+  } catch (err: any) {
+    console.error("Verification Request Error:", err);
     throw err;
   }
 };
@@ -358,7 +340,7 @@ const init = () => {
         showStep(2);
 
       } else {
-        alert(`Verifikasi Gagal: ${result.reason}\n\nPastikan foto jelas dan nominal sesuai Rp ${uniquePrice.toLocaleString('id-ID')}.`);
+        alert(`Verifikasi Gagal: ${result.reason}\n\nPastikan foto jelas dan nominal sesuai Rp ${uniquePrice.toLocaleString('id-ID')}. Jika AI masih menolak, silakan gunakan konfirmasi manual WhatsApp.`);
         btnConfirm.disabled = false;
         document.getElementById('btn-confirm-text')?.classList.remove('hidden');
         document.getElementById('btn-spinner')?.classList.add('hidden');
@@ -366,7 +348,7 @@ const init = () => {
       }
     } catch (err: any) {
       console.error(err);
-      alert(`Terjadi gangguan: ${err.message || "Coba lagi atau gunakan konfirmasi manual."}`);
+      alert(`Terjadi gangguan: ${err.message || "Sistem verifikasi sedang tidak tersedia. Silakan gunakan konfirmasi manual WhatsApp."}`);
       btnConfirm.disabled = false;
       document.getElementById('btn-confirm-text')?.classList.remove('hidden');
       document.getElementById('btn-spinner')?.classList.add('hidden');

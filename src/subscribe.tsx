@@ -57,7 +57,19 @@ function SubscribePage() {
         approvedAt: null
       });
 
-      setMessage("Pendaftaran berhasil! Akun aktif dalam 1x24 jam.");
+      // 5. Redirect to WhatsApp for Confirmation
+      const waNumber = "083892802483";
+      const waMessage = `Halo Admin, saya sudah mendaftar di Assistant Keuangan AI.\n\nNama: ${formData.name}\nEmail: ${formData.email}\n\nSaya sudah melakukan transfer dan upload bukti di website. Mohon bantuannya untuk verifikasi dan aktivasi akun saya. Terima kasih.`;
+      // Convert leading 0 to 62 for international format
+      const formattedNumber = waNumber.startsWith('0') ? '62' + waNumber.substring(1) : waNumber;
+      const waUrl = `https://wa.me/${formattedNumber}?text=${encodeURIComponent(waMessage)}`;
+
+      setMessage("Pendaftaran berhasil! Mengalihkan ke WhatsApp untuk konfirmasi aktivasi...");
+      
+      setTimeout(() => {
+        window.location.href = waUrl;
+      }, 2500);
+
       setFormData({ name: "", email: "", password: "" });
       setFile(null);
     } catch (err: any) {

@@ -49,7 +49,7 @@ function AdminPanel() {
       setUsers(allUsers);
       
       const counts = allUsers.reduce((acc: any, curr: any) => {
-        if (curr.status === "pending") acc.pending++;
+        if (curr.status === "pending" || curr.status === "pending_approval") acc.pending++;
         if (curr.status === "active") acc.active++;
         acc.total++;
         return acc;
@@ -76,11 +76,9 @@ function AdminPanel() {
   const handleApprove = async (userId: string) => {
     try {
       const userRef = doc(db, "users", userId);
-      // Yearly or Lifetime? 
-      // User requested "Life time saja", but their prompt said "expiresAt = now + 365"
-      // I will prioritize the "Life time" request from the chat message.
       await updateDoc(userRef, {
         status: "active",
+        isVerified: true,
         approvedAt: serverTimestamp(),
         expiresAt: null // Lifetime
       });
@@ -170,7 +168,7 @@ function AdminPanel() {
             </tr>
           </thead>
           <tbody>
-            {users.filter(u => u.status === "pending").map(u => (
+            {users.filter(u => u.status === "pending" || u.status === "pending_approval").map(u => (
               <tr key={u.id} style={{ borderBottom: "1px solid #eee" }}>
                 <td style={{ padding: "12px" }}>{u.name}</td>
                 <td style={{ padding: "12px" }}>{u.email}</td>
@@ -185,7 +183,7 @@ function AdminPanel() {
             ))}
           </tbody>
         </table>
-        {users.filter(u => u.status === "pending").length === 0 && <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>Tidak ada data pending.</div>}
+        {users.filter(u => u.status === "pending" || u.status === "pending_approval").length === 0 && <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>Tidak ada data pending.</div>}
       </div>
 
       <h2 style={{ marginBottom: "15px" }}>User Aktif</h2>

@@ -52,8 +52,8 @@ loginForm.addEventListener('submit', async (e) => {
 
     const userData = userDocSnap.data();
 
-    // 1. Check status
-    if (userData.status === "pending") {
+    // 1. Check status & Verification
+    if (!userData.isVerified || userData.status === "pending_approval" || userData.status === "pending") {
       await signOut(auth);
       showNotification("⚠️ Akun Anda sedang dalam proses verifikasi (Pending). Silakan tunggu 1x24 jam.", "warning");
       return;

@@ -16,30 +16,10 @@ const BANK_ACCOUNTS = [
 function SubscribePage() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "", whatsapp: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [error, setError] = useState("");
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      if (selected.size > 5 * 1024 * 1024) {
-        setError("File terlalu besar. Maksimal 5MB.");
-        return;
-      }
-      setFile(selected);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreview(reader.result as string);
-      };
-      reader.readAsDataURL(selected);
-    }
-  };
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -57,7 +37,6 @@ function SubscribePage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return setError("Format email tidak valid");
     if (formData.password.length < 8) return setError("Password minimal 8 karakter");
     if (!formData.whatsapp) return setError("Nomor WhatsApp wajib diisi");
-    if (!file) return setError("Silakan upload bukti transfer dahulu");
 
     setLoading(true);
 
@@ -65,14 +44,6 @@ function SubscribePage() {
       // Step 2: Create Firebase Auth Account
       const authResult = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const uid = authResult.user.uid;
-
-      // Upload Proof to Storage
-      let proofUrl = "";
-      if (file) {
-        const storageRef = ref(storage, `proofs/${uid}`);
-        await uploadBytes(storageRef, file);
-        proofUrl = await getDownloadURL(storageRef);
-      }
 
       // Step 3: Save to Firestore 'users'
       await setDoc(doc(db, "users", uid), {
@@ -84,7 +55,6 @@ function SubscribePage() {
         status: 'pending_approval',
         subscriptionType: 'lifetime',
         amount: 99000,
-        proofUrl: proofUrl,
         createdAt: serverTimestamp(),
         approvedAt: null,
         approvedBy: null
@@ -95,9 +65,16 @@ function SubscribePage() {
       const tgl = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-      const waMessage = `Halo Admin Assistant Keuangan AI 👋\n\nSaya ingin mendaftarkan akun baru dan sudah melakukan pembayaran.\n\n*DATA PENDAFTAR:*\n👤 Nama: ${formData.name}\n📧 Email: ${formData.email}\n📱 WhatsApp: ${formData.whatsapp}\n\n*INFO PEMBAYARAN:*\n💰 Nominal: Rp 99.000\n📅 Tanggal: ${tgl}\n🕐 Waktu: ${jam}\n\nBukti transfer sudah saya upload di form pendaftaran.\nMohon segera diverifikasi dan akun saya diaktifkan.\n\nTerima kasih 🙏`;
+      const waMessage = `Halo Admin Assistant Keuangan AI 👋\n\nSaya ingin mendaftarkan akun baru dan sudah melakukan pembayaran.\n\n*DATA PENDAFTAR:*\n👤 Nama: ${formData.name}\n📧 Email: ${formData.email}\n📱 WhatsApp: ${formData.whatsapp}\n\n*INFO PEMBAYARAN:*\n💰 Nominal: Rp 99.000\n📅 Tanggal: ${tgl}\n🕐 Waktu: ${jam}\n\nSaya sudah melakukan transfer. *Bukti transfer akan saya kirimkan setelah pesan ini.* \nMohon segera diverifikasi dan akun saya diaktifkan.\n\nTerima kasih 🙏`;
 
-      window.open(`https://wa.me/6283892802483?text=${encodeURIComponent(waMessage)}`, '_blank');
+      const waUrl = `https://wa.me/6283892802483?text=${encodeURIComponent(waMessage)}`;
+      
+      // Attempt to open in new tab
+      const win = window.open(waUrl, '_blank');
+      // If popup blocked, redirect same page
+      if (!win) {
+        window.location.href = waUrl;
+      }
 
       // Step 5: Show Success View
       setSuccess(true);
@@ -215,37 +192,6 @@ function SubscribePage() {
               className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition"
               required
             />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-2 ml-1">Upload Bukti Transfer</label>
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-emerald-500/50 hover:bg-white/5 transition group"
-            >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                accept="image/*" 
-                className="hidden" 
-              />
-              
-              {filePreview ? (
-                <div className="relative inline-block">
-                  <img src={filePreview} alt="Preview" className="max-h-48 rounded-lg mb-2 mx-auto shadow-lg" />
-                  <p className="text-xs text-emerald-400 font-medium">Klik untuk ganti file</p>
-                </div>
-              ) : (
-                <div className="py-4">
-                  <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition">
-                    <Upload className="text-gray-400 group-hover:text-emerald-400" />
-                  </div>
-                  <p className="text-gray-400 text-sm">Klik untuk upload bukti transfer</p>
-                  <p className="text-gray-500 text-xs mt-1">Format: JPG, PNG (Max 5MB)</p>
-                </div>
-              )}
-            </div>
           </div>
 
           {error && (

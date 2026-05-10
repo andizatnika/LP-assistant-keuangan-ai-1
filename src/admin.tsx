@@ -217,5 +217,17 @@ function AdminPanel() {
   );
 }
 
-const root = createRoot(document.getElementById("root")!);
-root.render(<AdminPanel />);
+console.log("Admin entry point loaded");
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  try {
+    const root = createRoot(rootElement);
+    root.render(<AdminPanel />);
+    console.log("Admin React rendered");
+  } catch (err) {
+    console.error("React Render Error (Admin):", err);
+    rootElement.innerHTML = `<div style="color:red; padding:20px;">Gagal memuat Admin Panel. Silakan muat ulang halaman.</div>`;
+  }
+} else {
+  console.error("Root element not found");
+}

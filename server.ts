@@ -103,15 +103,15 @@ async function startServer() {
 
   app.get('/subscribe', (req, res) => {
     const filePath = process.env.NODE_ENV !== "production"
-      ? path.join(process.cwd(), 'subscribe.html')
-      : path.join(distPath, 'subscribe.html');
+      ? path.join(process.cwd(), 'subscribe', 'index.html')
+      : path.join(distPath, 'subscribe', 'index.html');
     res.sendFile(filePath);
   });
 
   app.get('/admin', (req, res) => {
     const filePath = process.env.NODE_ENV !== "production"
-      ? path.join(process.cwd(), 'admin.html')
-      : path.join(distPath, 'admin.html');
+      ? path.join(process.cwd(), 'admin', 'index.html')
+      : path.join(distPath, 'admin', 'index.html');
     res.sendFile(filePath);
   });
 

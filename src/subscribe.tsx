@@ -145,5 +145,17 @@ function SubscribePage() {
   );
 }
 
-const root = createRoot(document.getElementById("root")!);
-root.render(<SubscribePage />);
+console.log("Subscribe entry point loaded");
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  try {
+    const root = createRoot(rootElement);
+    root.render(<SubscribePage />);
+    console.log("Subscribe React rendered");
+  } catch (err) {
+    console.error("React Render Error (Subscribe):", err);
+    rootElement.innerHTML = `<div style="color:red; padding:20px;">Gagal memuat aplikasi. Silakan muat ulang halaman.</div>`;
+  }
+} else {
+  console.error("Root element not found");
+}

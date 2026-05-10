@@ -20,7 +20,9 @@ export default defineConfig(({mode}) => {
         input: {
           main: path.resolve(__dirname, 'index.html'),
           login: path.resolve(__dirname, 'login.html'),
-          checkout1: path.resolve(__dirname, 'checkout1/index.html')
+          checkout1: path.resolve(__dirname, 'checkout1/index.html'),
+          subscribe: path.resolve(__dirname, 'subscribe.html'),
+          admin: path.resolve(__dirname, 'admin.html')
         },
       },
     },

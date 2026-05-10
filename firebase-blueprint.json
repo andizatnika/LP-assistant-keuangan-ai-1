@@ -9,11 +9,14 @@
         "email": { "type": "string" },
         "whatsapp": { "type": "string" },
         "role": { "type": "string", "enum": ["user"] },
-        "isVerified": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "active", "rejected"] },
+        "proofUrl": { "type": "string" },
+        "isLifetime": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" },
-        "expiresAt": { "type": "string", "format": "date-time" }
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "approvedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "email", "whatsapp", "role", "isVerified"]
+      "required": ["name", "email", "status", "proofUrl"]
     }
   },
   "firestore": {

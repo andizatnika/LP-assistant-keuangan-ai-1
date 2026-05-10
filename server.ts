@@ -101,6 +101,20 @@ async function startServer() {
     res.sendFile(filePath);
   });
 
+  app.get('/subscribe', (req, res) => {
+    const filePath = process.env.NODE_ENV !== "production"
+      ? path.join(process.cwd(), 'subscribe.html')
+      : path.join(distPath, 'subscribe.html');
+    res.sendFile(filePath);
+  });
+
+  app.get('/admin', (req, res) => {
+    const filePath = process.env.NODE_ENV !== "production"
+      ? path.join(process.cwd(), 'admin.html')
+      : path.join(distPath, 'admin.html');
+    res.sendFile(filePath);
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

@@ -52,17 +52,21 @@ loginForm.addEventListener('submit', async (e) => {
 
     const userData = userDocSnap.data();
 
-    // 1. Check if verified
-    if (!userData.isVerified) {
+    // 1. Check status
+    if (userData.status === "pending") {
       await signOut(auth);
-      showNotification("⚠️ Akun Anda belum terverifikasi pembayaran. Silakan selesaikan pembayaran terlebih dahulu.", "warning");
+      showNotification("⚠️ Akun Anda sedang dalam proses verifikasi (Pending). Silakan tunggu 1x24 jam.", "warning");
       return;
     }
 
-    // 2. Check Expiration
-    if (userData.expiresAt) {
-      // is timestamp from firestore or JS Date based on how it's stored.
-      // Firestore timestamp object has .toDate() method.
+    if (userData.status === "rejected") {
+      await signOut(auth);
+      showNotification("❌ Pembayaran Anda ditolak. Silakan hubungi admin di WhatsApp.", "error");
+      return;
+    }
+
+    // 2. Check Expiration (only if not lifetime)
+    if (!userData.isLifetime && userData.expiresAt) {
       let expiresAtDate: Date;
       if (typeof userData.expiresAt.toDate === 'function') {
         expiresAtDate = userData.expiresAt.toDate();
@@ -74,8 +78,8 @@ loginForm.addEventListener('submit', async (e) => {
         await signOut(auth);
         showNotification(
           `⛔ <strong>Masa Keanggotaan Habis</strong><br><br>
-           Masa aktif akun AI Assistant Anda selama 1 tahun telah berakhir pada ${expiresAtDate.toLocaleDateString('id-ID')}.<br><br>
-           <a href="/checkout1" class="underline font-bold mt-2 inline-block">Klik di sini untuk Memperpanjang</a>`, 
+           Masa aktif akun AI Assistant Anda telah berakhir.<br><br>
+           <a href="/subscribe" class="underline font-bold mt-2 inline-block">Klik di sini untuk Memperpanjang</a>`, 
           "error"
         );
         return;

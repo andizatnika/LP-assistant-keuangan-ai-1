@@ -83,6 +83,9 @@ loginForm.addEventListener('submit', async (e) => {
     }
 
     // Success login
+    if ((window as any).fbq) {
+      (window as any).fbq('track', 'CompleteRegistration', { content_name: 'Login Success' });
+    }
     showNotification("✅ Login berhasil! Mengalihkan ke dashboard...", "success");
     
     // In a real app we'd redirect to dashboard here.
